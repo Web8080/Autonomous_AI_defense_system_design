@@ -1,0 +1,38 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #0f1419;
+  color: #e6edf3;
+}
+a {
+  color: #58a6ff;
+}
+button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #e6edf3;
+}
+button:hover {
+  background: #30363d;
+}
+button.danger {
+  background: #da3633;
+  border-color: #b62324;
+  color: #fff;
+}
+button.danger:hover {
+  background: #b62324;
+}
+input, select {
+  padding: 0.5rem;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #e6edf3;
+}

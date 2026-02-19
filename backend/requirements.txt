@@ -1,0 +1,25 @@
+# Backend shared
+pydantic>=2.0
+python-dotenv>=1.0
+
+# API services
+fastapi>=0.104
+uvicorn[standard]>=0.24
+httpx>=0.25
+asyncpg>=0.29
+PyJWT>=2.8
+
+# Kafka
+kafka-python>=2.0
+
+# Celery
+celery[redis]>=5.3
+
+# Tests
+pytest>=7.0
+pytest-asyncio>=0.21
+httpx>=0.25
+
+# Inference (optional for stub)
+# torch>=2.0
+# ultralytics>=8.0

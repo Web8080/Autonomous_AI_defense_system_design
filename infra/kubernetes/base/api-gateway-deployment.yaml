@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: defense
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: defense/api-gateway:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ASSET_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: defense-config
+                  key: asset_service_url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: defense-secrets
+                  key: jwt_secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: defense
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway
+  namespace: defense
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.defense.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 80

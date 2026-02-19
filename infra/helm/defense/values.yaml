@@ -1,0 +1,26 @@
+replicaCount: 1
+image:
+  repository: defense
+  pullPolicy: IfNotPresent
+env:
+  database_url: ""
+  redis_url: ""
+  kafka_bootstrap_servers: ""
+  jwt_secret: ""
+
+apiGateway:
+  replicas: 2
+assetService:
+  replicas: 1
+telemetryService:
+  replicas: 1
+alertService:
+  replicas: 1
+controlService:
+  replicas: 1
+inferenceService:
+  replicas: 1
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "1"
