@@ -9,6 +9,10 @@ type Replay = { scenario: string; bounds?: number[]; path?: number[][]; duration
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+const REPLAYS: { label: string; file: string }[] = [
+  { label: "Railway line", file: "railway_line_replay.json" },
+];
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("defense_token");
@@ -21,18 +25,26 @@ export default function SimulationViewerPage() {
   const [playing, setPlaying] = useState(false);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [overlays, setOverlays] = useState({ trails: true, zones: true });
+  const [selectedReplay, setSelectedReplay] = useState(REPLAYS[0]?.file ?? "railway_line_replay.json");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trailsRef = useRef<Record<string, number[][]>>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    loadReplay("railway_line_replay.json");
+  }, []);
 
   const loadReplay = useCallback(async (name: string) => {
     setLoading(true);
     setError("");
     try {
       const token = getToken();
-      const res = await fetch(`${API_URL}/api/v1/simulation/replay?name=${encodeURIComponent(name)}`, {
+      let res = await fetch(`${API_URL}/api/v1/simulation/replay?name=${encodeURIComponent(name)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      if (!res.ok) {
+        res = await fetch(`/replay/${encodeURIComponent(name)}`);
+      }
       if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
       const data: Replay = await res.json();
       setReplay(data);
@@ -47,14 +59,12 @@ export default function SimulationViewerPage() {
   }, []);
 
   useEffect(() => {
-    if (!playing || !replay) return;
-    intervalRef.current = setInterval(() => {
+    if (!replay || !playing) return;
+    const id = setInterval(() => {
       setCurrentFrameIndex((i) => (i + 1 >= replay.frames.length ? 0 : i + 1));
     }, 200);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [playing, replay]);
+    return () => clearInterval(id);
+  }, [replay, playing]);
 
   useEffect(() => {
     if (!replay || !canvasRef.current) return;
@@ -149,16 +159,23 @@ export default function SimulationViewerPage() {
 
       <section style={{ marginBottom: "1rem", display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
         <label>
-          Replay file (from API):{" "}
-          <input
-            type="text"
-            placeholder="railway_line_replay.json"
-            defaultValue="railway_line_replay.json"
-            onKeyDown={(e) => e.key === "Enter" && loadReplay((e.target as HTMLInputElement).value)}
-          />
+          Replay:{" "}
+          <select
+            value={selectedReplay}
+            onChange={(e) => {
+              const file = e.target.value;
+              setSelectedReplay(file);
+              loadReplay(file);
+            }}
+            style={{ minWidth: 180 }}
+          >
+            {REPLAYS.map((r) => (
+              <option key={r.file} value={r.file}>{r.label}</option>
+            ))}
+          </select>
         </label>
-        <button type="button" onClick={() => loadReplay("railway_line_replay.json")}>
-          Load replay
+        <button type="button" onClick={() => loadReplay(selectedReplay)}>
+          Reload
         </button>
         {replay && (
           <>
@@ -186,7 +203,11 @@ export default function SimulationViewerPage() {
       </section>
 
       {loading && <p>Loading replay...</p>}
-      {error && <p style={{ color: "#f85149" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "#f85149" }}>
+          {error}. If using dashboard only (no API), ensure <code>dashboard/public/replay/railway_line_replay.json</code> exists.
+        </p>
+      )}
       {replay && (
         <section>
           <p style={{ marginBottom: "0.5rem" }}>
@@ -222,13 +243,13 @@ export default function SimulationViewerPage() {
 
       {!replay && !loading && (
         <section style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #21262d", borderRadius: 8 }}>
-          <h2>How to run a scenario</h2>
+          <h2>How to watch the simulation</h2>
+          <p><strong>Option A – no backend:</strong> Copy the replay file into the dashboard so the viewer can load it directly.</p>
           <ol style={{ marginLeft: "1.25rem" }}>
-            <li>From repo root: <code>cd simulation &amp;&amp; pip install -r requirements.txt</code></li>
-            <li>Run the scenario: <code>python scenario_runner.py scenarios/railway_line.json</code></li>
-            <li>Replay is written to <code>replay/railway_line_replay.json</code>. Copy it to a location served by the API, or set REPLAY_DIR on the gateway and restart.</li>
-            <li>Load replay above (gateway must serve <code>GET /api/v1/simulation/replay?name=railway_line_replay.json</code> with REPLAY_DIR pointing to the replay folder).</li>
+            <li>Create <code>dashboard/public/replay/</code> and copy <code>simulation/replay/railway_line_replay.json</code> into it.</li>
+            <li>From repo root: <code>cd dashboard &amp;&amp; npm run dev</code>. Open <code>http://localhost:3000</code>, go to Simulation, click Load replay (uses <code>railway_line_replay.json</code> from <code>/replay/</code>).</li>
           </ol>
+          <p><strong>Option B – via API:</strong> Set gateway <code>REPLAY_DIR</code> to the full path of <code>simulation/replay</code>, restart the api-gateway, then load the replay above (requires login with dev-token if using API).</p>
         </section>
       )}
     </main>

@@ -1,0 +1,3973 @@
+{
+  "scenario": "Railway line \u2013 patrol and incident response",
+  "bounds": [
+    0,
+    0,
+    1000,
+    200
+  ],
+  "path": [
+    [
+      0,
+      100
+    ],
+    [
+      200,
+      100
+    ],
+    [
+      400,
+      105
+    ],
+    [
+      600,
+      98
+    ],
+    [
+      800,
+      102
+    ],
+    [
+      1000,
+      100
+    ]
+  ],
+  "duration_sec": 120,
+  "dt": 1.0,
+  "frames": [
+    {
+      "t": 0.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            0.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            0.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 1.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            5.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            3.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 2.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            10.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            6.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 3.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            15.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            9.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 4.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            20.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            12.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 5.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            25.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            15.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 6.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            30.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            18.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 7.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            35.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            21.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 8.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            40.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            24.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 9.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            45.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            27.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 10.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            50.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            30.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 11.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            55.00000000000001,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            33.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 12.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            60.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            36.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 13.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            65.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            39.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 14.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            70.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            42.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 15.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            75.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            45.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 16.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            80.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            48.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 17.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            85.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            51.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 18.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            90.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            54.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 19.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            95.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            56.99999999999999,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 20.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            100.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            60.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 21.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            105.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            63.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 22.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            110.00000000000001,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            66.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 23.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            114.99999999999999,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            69.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 24.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            120.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            72.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 25.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            125.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            75.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 26.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            130.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            78.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 27.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            135.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            81.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 28.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            140.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            84.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 29.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            145.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            87.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 30.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            150.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            90.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 31.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            155.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            93.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 32.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            160.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            96.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 33.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            165.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            99.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 34.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            170.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            102.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            350,
+            100
+          ],
+          "type": "intrusion"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            350,
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "t": 35.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            175.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            105.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 36.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            180.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            108.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 37.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            185.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            111.00000000000001,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 38.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            190.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            113.99999999999999,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 39.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            195.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            117.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 40.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            200.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            120.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 41.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            204.99843823204063,
+            100.12496095580101
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            123.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 42.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            209.99687646408123,
+            100.24992191160203
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            126.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 43.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            214.99531469612185,
+            100.37488286740304
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            129.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 44.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            219.99375292816245,
+            100.49984382320406
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            132.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 45.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            224.99219116020308,
+            100.62480477900507
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            135.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 46.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            229.99062939224368,
+            100.74976573480609
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            138.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 47.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            234.9890676242843,
+            100.8747266906071
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            141.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 48.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            239.9875058563249,
+            100.99968764640812
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            144.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 49.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            244.98594408836553,
+            101.12464860220913
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            147.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 50.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            249.98438232040613,
+            101.24960955801015
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            150.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 51.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            254.98282055244675,
+            101.37457051381116
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            153.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 52.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            259.98125878448735,
+            101.49953146961218
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            156.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 53.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            264.97969701652795,
+            101.6244924254132
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            159.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 54.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            269.9781352485686,
+            101.74945338121421
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            162.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 55.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            274.9765734806092,
+            101.87441433701522
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            165.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 56.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            279.9750117126498,
+            101.99937529281624
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            168.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 57.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            284.9734499446904,
+            102.12433624861725
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            171.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 58.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            289.97188817673106,
+            102.24929720441827
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            174.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 59.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            294.97032640877165,
+            102.37425816021928
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            177.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 60.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            299.96876464081225,
+            102.49921911602031
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            180.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 61.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            304.9672028728529,
+            102.62418007182133
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            183.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 62.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            309.9656411048935,
+            102.74914102762234
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            186.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 63.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            314.9640793369341,
+            102.87410198342336
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            189.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 64.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            319.9625175689747,
+            102.99906293922437
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            192.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 65.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            324.96095580101536,
+            103.12402389502539
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            195.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 66.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            329.9593940330559,
+            103.2489848508264
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            198.0,
+            100.0
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 67.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            334.95783226509656,
+            103.37394580662742
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            200.99968764640812,
+            100.02499219116021
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 68.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            339.9562704971372,
+            103.49890676242843
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            203.99875058563248,
+            100.0999687646408
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 69.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            344.9547087291778,
+            103.62386771822945
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            206.99781352485687,
+            100.17494533812142
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [
+        {
+          "position": [
+            700,
+            98
+          ],
+          "type": "obstacle"
+        }
+      ],
+      "decisions": [
+        {
+          "asset_id": "asset-drone-1",
+          "intent": "investigate",
+          "target": [
+            700,
+            98
+          ]
+        }
+      ]
+    },
+    {
+      "t": 70.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            349.9531469612184,
+            103.74882867403046
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            209.99687646408123,
+            100.24992191160203
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 71.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            354.951585193259,
+            103.87378962983148
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            212.99593940330558,
+            100.32489848508264
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 72.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            359.9500234252996,
+            103.9987505856325
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            215.99500234252997,
+            100.39987505856325
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 73.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            364.94846165734026,
+            104.12371154143351
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            218.99406528175433,
+            100.47485163204385
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 74.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            369.94689988938086,
+            104.24867249723452
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            221.9931282209787,
+            100.54982820552446
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 75.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            374.9453381214215,
+            104.37363345303554
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            224.99219116020308,
+            100.62480477900507
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 76.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            379.9437763534621,
+            104.49859440883655
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            227.99125409942744,
+            100.69978135248569
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 77.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            384.9422145855027,
+            104.62355536463757
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            230.9903170386518,
+            100.7747579259663
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 78.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            389.9406528175433,
+            104.74851632043858
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            233.98937997787618,
+            100.84973449944691
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 79.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            394.9390910495839,
+            104.8734772762396
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            236.98844291710054,
+            100.92471107292751
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 80.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            399.9375292816245,
+            104.99843823204061
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            239.9875058563249,
+            100.99968764640812
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 81.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            404.934488313518,
+            104.82729290902687
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            242.98656879554926,
+            101.07466421988873
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 82.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            409.93142862432063,
+            104.65239999814878
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            245.98563173477365,
+            101.14964079336934
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 83.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            414.92836893512333,
+            104.47750708727068
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            248.984694673998,
+            101.22461736684996
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 84.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            419.925309245926,
+            104.3026141763926
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            251.9837576132224,
+            101.29959394033055
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 85.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            424.9222495567286,
+            104.1277212655145
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            254.98282055244675,
+            101.37457051381116
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 86.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            429.9191898675313,
+            103.95282835463641
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            257.9818834916711,
+            101.44954708729178
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 87.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            434.91613017833396,
+            103.77793544375831
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            260.9809464308955,
+            101.52452366077239
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 88.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            439.9130704891366,
+            103.60304253288022
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            263.98000937011983,
+            101.599500234253
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 89.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            444.9100107999393,
+            103.42814962200212
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            266.97907230934425,
+            101.67447680773361
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 90.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            449.90695111074194,
+            103.25325671112404
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            269.9781352485686,
+            101.74945338121421
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 91.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            454.9038914215446,
+            103.07836380024594
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            272.97719818779296,
+            101.82442995469482
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 92.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            459.9008317323472,
+            102.90347088936785
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            275.9762611270173,
+            101.89940652817543
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 93.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            464.8977720431499,
+            102.72857797848975
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            278.9753240662417,
+            101.97438310165604
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 94.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            469.89471235395257,
+            102.55368506761167
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            281.97438700546604,
+            102.04935967513666
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 95.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            474.89165266475527,
+            102.37879215673357
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            284.9734499446904,
+            102.12433624861725
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 96.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            479.8885929755579,
+            102.20389924585547
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            287.9725128839148,
+            102.19931282209787
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 97.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            484.88553328636056,
+            102.02900633497738
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            290.9715758231392,
+            102.27428939557848
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 98.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            489.8824735971632,
+            101.85411342409928
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            293.97063876236354,
+            102.34926596905909
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 99.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            494.87941390796584,
+            101.6792205132212
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            296.9697017015879,
+            102.4242425425397
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 100.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            499.87635421876854,
+            101.5043276023431
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            299.96876464081225,
+            102.49921911602031
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 101.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            504.8732945295712,
+            101.32943469146501
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            302.96782758003667,
+            102.57419568950091
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 102.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            509.8702348403739,
+            101.15454178058691
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            305.966890519261,
+            102.64917226298152
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 103.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            514.8671751511765,
+            100.97964886970883
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            308.9659534584854,
+            102.72414883646213
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 104.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            519.8641154619792,
+            100.80475595883073
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            311.96501639770975,
+            102.79912540994275
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 105.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            524.8610557727818,
+            100.62986304795264
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            314.9640793369341,
+            102.87410198342336
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 106.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            529.8579960835846,
+            100.45497013707454
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            317.96314227615846,
+            102.94907855690396
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 107.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            534.8549363943871,
+            100.28007722619645
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            320.9622052153828,
+            103.02405513038457
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 108.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            539.8518767051899,
+            100.10518431531835
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            323.9612681546072,
+            103.09903170386518
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 109.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            544.8488170159925,
+            99.93029140444027
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            326.9603310938316,
+            103.17400827734579
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 110.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            549.8457573267951,
+            99.75539849356217
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            329.9593940330559,
+            103.2489848508264
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 111.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            554.8426976375978,
+            99.58050558268408
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            332.9584569722803,
+            103.32396142430702
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 112.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            559.8396379484004,
+            99.40561267180598
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            335.9575199115047,
+            103.39893799778761
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 113.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            564.8365782592032,
+            99.23071976092788
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            338.95658285072903,
+            103.47391457126822
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 114.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            569.8335185700057,
+            99.0558268500498
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            341.95564578995345,
+            103.54889114474884
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 115.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            574.8304588808085,
+            98.88093393917171
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            344.9547087291778,
+            103.62386771822945
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 116.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            579.8273991916111,
+            98.70604102829361
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            347.95377166840217,
+            103.69884429171006
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 117.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            584.8243395024137,
+            98.53114811741551
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            350.9528346076265,
+            103.77382086519066
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 118.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            589.8212798132164,
+            98.35625520653743
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            353.9518975468509,
+            103.84879743867127
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 119.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            594.818220124019,
+            98.18136229565933
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            356.95096048607525,
+            103.92377401215188
+          ],
+          "status": "in_mission",
+          "task": "patrol"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    },
+    {
+      "t": 120.0,
+      "assets": [
+        {
+          "id": "asset-drone-1",
+          "name": "Patrol Drone 1",
+          "asset_type": "drone",
+          "position": [
+            599.8151604348218,
+            98.00646938478124
+          ],
+          "status": "in_mission",
+          "task": "idle"
+        },
+        {
+          "id": "asset-vehicle-1",
+          "name": "Ground Responder",
+          "asset_type": "ground_vehicle",
+          "position": [
+            359.9500234252996,
+            103.9987505856325
+          ],
+          "status": "in_mission",
+          "task": "idle"
+        }
+      ],
+      "threats_active": [],
+      "decisions": []
+    }
+  ]
+}

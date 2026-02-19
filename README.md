@@ -1,5 +1,7 @@
 # Autonomous AI Defense System for Critical Infrastructure
 
+![Banner](.github/social-preview.jpg)
+
 ## Purpose and Product Context
 
 This system provides integrated autonomous surveillance and response for critical infrastructure. It detects threats in real time from fused sensor data (cameras, LIDAR, radar, IoT), runs AI-powered computer vision (YOLO/PyTorch), and supports autonomous deployment of drones and ground vehicles within safety constraints. Operators (Super Admin and Local Operator) monitor, intervene, and audit all actions.
@@ -27,7 +29,7 @@ Tech stack: PyTorch, YOLO (ultralytics), FastAPI, PostgreSQL, Redis, Kafka, Dock
 - **Threat detection**: Telemetry/frames -> Kafka -> inference -> detections -> alerts and optional autonomous agent -> control commands.
 - **Operator override**: Dashboard -> API gateway -> control service -> audit log and MQTT/asset.
 - **Emergency stop**: Dedicated endpoint -> control service -> immediate command to assets; always logged.
-- **Training and drift**: Local or S3/Roboflow datasets -> train_yolo / finetune; metrics -> drift_detector -> optional retrain_trigger.
+- **Training and drift**: Local or S3/Roboflow datasets -> train_yolo / finetune; metrics -> drift_detector -> optional retrain_trigger. Training is script-based (Python); no Jupyter notebooks.
 
 See `docs/phase0/07-ai-decision-flows.md` for detailed AI and operator flows.
 
@@ -37,7 +39,7 @@ See `docs/phase0/07-ai-decision-flows.md` for detailed AI and operator flows.
 2. **Clone and env**: Copy `.env.example` to `.env` and set at least `DATABASE_URL`, `REDIS_URL`, `KAFKA_BOOTSTRAP_SERVERS`, `JWT_SECRET`. Do not commit `.env`.
 3. **Backend**: From repo root, run `./scripts/run_local.sh` to start Postgres, Redis, Kafka, and all backend services. Or run `docker compose up -d` then start services manually.
 4. **Database**: Schema is applied via `backend/db/schema/01_init.sql` when Postgres first starts (Docker volume).
-5. **Dashboard**: `cd dashboard && npm install && npm run dev`; open http://localhost:3000. Set `NEXT_PUBLIC_API_URL` if API is not on localhost:8000.
+5. **Dashboard (local)**: From repo root run `./scripts/launch_dashboard.sh` to install dependencies, copy the simulation replay into the dashboard, and start the dev server. Then open http://localhost:3000, log in with any email/password, and go to **Simulation** to watch the railway replay. Alternatively: `cd dashboard && npm install && npm run dev`.
 6. **Verification**: `./scripts/verify_health.sh` (requires API on port 8000).
 
 ## Security and Safeguardrails
