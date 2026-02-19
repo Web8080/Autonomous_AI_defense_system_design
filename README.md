@@ -82,6 +82,10 @@ See `docs/phase0/07-ai-decision-flows.md` for detailed AI and operator flows.
 - Terraform has placeholder resources; add EKS, RDS, S3, IAM after account/region are approved.
 - E2E tests assume backend and dashboard running; CI runs unit tests and dashboard build only.
 
+## What's next
+
+**Summary:** The next concrete step is run the full stack (backend + dashboard) and smoke-test Control and Simulation. After that, the highest-value "what is next" items are real JWT validation and real inference (YOLO).
+
 ## Screenshots
 
 ### Dashboard map
