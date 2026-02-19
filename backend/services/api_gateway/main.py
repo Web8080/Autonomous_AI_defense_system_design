@@ -223,3 +223,27 @@ async def inference_health(
         r = await client.get(f"{SERVICE_URLS['inference']}/health", timeout=5.0)
         r.raise_for_status()
         return r.json()
+
+
+REPLAY_DIR = os.getenv("REPLAY_DIR", "")
+
+
+@app.get("/api/v1/simulation/replay")
+async def get_simulation_replay(
+    name: str = "",
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Serve a scenario replay JSON by name (e.g. railway_line_replay.json). Set REPLAY_DIR on gateway."""
+    if not REPLAY_DIR or not name:
+        raise HTTPException(status_code=404, detail="Replay not found")
+    if ".." in name or "/" in name or "\\" in name:
+        raise HTTPException(status_code=400, detail="Invalid name")
+    path = os.path.join(REPLAY_DIR, name)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="Replay not found")
+    try:
+        with open(path) as f:
+            import json
+            return json.load(f)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to load replay")

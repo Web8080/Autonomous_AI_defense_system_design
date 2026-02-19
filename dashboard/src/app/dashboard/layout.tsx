@@ -43,6 +43,7 @@ export default function DashboardLayout({
           <Link href="/dashboard/assets">Assets</Link>
           <Link href="/dashboard/alerts">Alerts</Link>
           <Link href="/dashboard/control">Control</Link>
+          <Link href="/dashboard/simulation">Simulation</Link>
           {role === "super_admin" && <Link href="/dashboard/admin">Admin</Link>}
         </nav>
         <span style={{ fontSize: 14 }}>Role: {role}</span>

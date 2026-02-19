@@ -1,0 +1,48 @@
+{
+  "name": "Railway line – patrol and incident response",
+  "environment": "railway",
+  "bounds": [0, 0, 1000, 200],
+  "duration_sec": 120,
+  "path": {
+    "name": "Track",
+    "points": [[0, 100], [200, 100], [400, 105], [600, 98], [800, 102], [1000, 100]]
+  },
+  "zones": [
+    {
+      "id": "zone-track",
+      "name": "Track",
+      "type": "patrol",
+      "polygon": [[0, 80], [1000, 80], [1000, 120], [0, 120]]
+    },
+    {
+      "id": "zone-restricted",
+      "name": "Restricted",
+      "type": "restricted",
+      "polygon": [[400, 0], [600, 0], [600, 60], [400, 60]]
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset-drone-1",
+      "name": "Patrol Drone 1",
+      "asset_type": "drone",
+      "region_id": "region-railway",
+      "start": [50, 100],
+      "patrol_path": "path",
+      "speed": 5
+    },
+    {
+      "id": "asset-vehicle-1",
+      "name": "Ground Responder",
+      "asset_type": "ground_vehicle",
+      "region_id": "region-railway",
+      "start": [900, 100],
+      "patrol_path": "path",
+      "speed": 3
+    }
+  ],
+  "threats": [
+    { "t_sec": 20, "position": [350, 100], "type": "intrusion", "duration_sec": 15 },
+    { "t_sec": 60, "position": [700, 98], "type": "obstacle", "duration_sec": 10 }
+  ]
+}

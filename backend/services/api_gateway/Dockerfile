@@ -4,6 +4,6 @@ ENV PYTHONPATH=/app/shared
 COPY shared/ /app/shared/
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r /app/requirements.txt
-COPY services/api_gateway/main.py /app/
+COPY services/api_gateway/ /app/
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

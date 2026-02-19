@@ -131,7 +131,8 @@ services:
       CONTROL_SERVICE_URL: http://control-service:8000
       INFERENCE_SERVICE_URL: http://inference-service:8000
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
-      JWT_SECRET: dev_secret_change_in_prod
+      JWT_SECRET: dev_secret_change_in_prod_min_32_chars_required
+      ALLOW_DEV_TOKEN: "true"
     depends_on:
       - asset-service
       - telemetry-service
