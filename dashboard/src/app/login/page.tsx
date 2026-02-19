@@ -14,16 +14,21 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const useDevToken =
+      apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1");
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await fetch(`${apiUrl}/health`);
       if (!res.ok) throw new Error("API unreachable");
-      const useDevToken =
-        apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1");
       setSession(useDevToken ? "dev-token" : "stub-token-" + Date.now(), role);
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      if (useDevToken) {
+        setSession("dev-token", role);
+        router.push("/dashboard");
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed");
+      }
     }
   };
 
