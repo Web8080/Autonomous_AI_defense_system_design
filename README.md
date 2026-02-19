@@ -89,3 +89,8 @@ See `docs/phase0/07-ai-decision-flows.md` for detailed AI and operator flows.
 
 ### Control and emergency stop
 ![Control page with emergency stop buttons](./screenshots/dashboard-control.png)
+
+### Scenario simulation
+Railway line replay with agent trails and zones: play/pause timeline, agent positions and status.
+
+![Scenario simulation dashboard](./screenshots/scenario_simulation_dashboard.png)
