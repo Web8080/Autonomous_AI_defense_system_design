@@ -28,13 +28,31 @@ def aggregate_telemetry_bucket(asset_id: str, bucket_ts: str) -> str:
 
 @app.task
 def trigger_drift_check() -> str:
-    """Called by scheduler; checks inference metrics and may enqueue retrain. See Phase 3 drift scripts."""
-    # TODO: call drift detection script or API
+    """Called by scheduler; runs drift_detector, exits 1 on drift and can enqueue retrain."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    ml_drift = Path(__file__).resolve().parents[1] / "ml" / "drift_detector.py"
+    if not ml_drift.exists():
+        return "drift_check_skipped_no_script"
+    r = subprocess.run([sys.executable, str(ml_drift), "--alert"], capture_output=True, text=True)
+    if r.returncode == 1:
+        trigger_retrain.delay(os.getenv("DATASET_PATH", "data/raw"), {"epochs": 30})
     return "drift_check_done"
 
 
 @app.task
 def trigger_retrain(dataset_path: str, config: dict) -> str:
-    """Enqueue training job. Actual training runs in Phase 3 scripts."""
-    # TODO: invoke training pipeline (subprocess or k8s job)
-    return f"retrain_queued {dataset_path}"
+    """Run training pipeline (train_yolo) with given config. Blocks until done."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    ml_train = Path(__file__).resolve().parents[1] / "ml" / "train_yolo.py"
+    if not ml_train.exists():
+        return f"retrain_skipped_no_script {dataset_path}"
+    epochs = config.get("epochs", 30)
+    cmd = [sys.executable, str(ml_train), "--epochs", str(epochs)]
+    if config.get("data_yaml"):
+        cmd.extend(["--data-yaml", config["data_yaml"]])
+    subprocess.run(cmd, cwd=str(Path(__file__).resolve().parents[1]), check=False)
+    return f"retrain_done {dataset_path}"

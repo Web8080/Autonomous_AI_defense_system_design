@@ -1,0 +1,41 @@
+@startuml C4-Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(operator, "Security Operator", "Super Admin / Local Operator")
+System_Boundary(defense, "Autonomous AI Defense System") {
+    Container(gw, "API Gateway", "FastAPI", "Auth, RBAC, REST, WebSocket")
+    Container(asset, "Asset Service", "FastAPI", "CRUD assets, regions")
+    Container(telemetry, "Telemetry Service", "FastAPI", "Ingest Kafka, aggregate, store")
+    Container(inference, "Inference Service", "FastAPI", "YOLO threat detection, Kafka in/out")
+    Container(alert, "Alert Service", "FastAPI", "Consume detections, create alerts")
+    Container(control, "Control Service", "FastAPI", "Commands, audit, autonomous agent")
+    Container(dashboard, "Dashboard", "Next.js", "Map, alerts, control, simulation")
+}
+Container_Ext(kafka, "Kafka", "Event streaming", "telemetry.*, inference.frames, inference.detections")
+Container_Ext(pg, "PostgreSQL", "Database", "assets, telemetry, alerts, audit")
+Container_Ext(redis, "Redis", "Cache / Celery broker", "sessions, task queue")
+Container_Ext(sensors, "Sensors", "Camera, LIDAR, Radar", "Frames, telemetry")
+Container_Ext(assets_hw, "Assets (HW)", "Drones, vehicles", "MQTT/ROS commands")
+
+Rel(operator, gw, "HTTPS, WSS")
+Rel(gw, asset, "REST")
+Rel(gw, telemetry, "REST")
+Rel(gw, inference, "REST")
+Rel(gw, alert, "REST")
+Rel(gw, control, "REST")
+Rel(operator, dashboard, "Browser")
+Rel(dashboard, gw, "REST, WSS")
+Rel(sensors, kafka, "Frames, telemetry")
+Rel(telemetry, kafka, "Consume")
+Rel(telemetry, pg, "Write aggregates")
+Rel(inference, kafka, "Consume frames, produce detections")
+Rel(alert, kafka, "Consume detections")
+Rel(alert, pg, "Write alerts")
+Rel(control, pg, "Audit log")
+Rel(control, assets_hw, "MQTT/ROS (placeholder)")
+Rel(asset, pg, "CRUD")
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml C4-Component-Inference
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(inference_svc, "Inference Service") {
+    Component(kafka_consumer, "Kafka Frame Consumer", "Python", "Consumes inference.frames, decodes base64/URL")
+    Component(model_loader, "Model Loader", "PyTorch/ONNX", "Load YOLO, quantized, warm-up")
+    Component(detection_pipeline, "Detection Pipeline", "Python", "Preprocess, infer, NMS, threat mapping")
+    Component(kafka_producer, "Kafka Producer", "kafka-python", "Publish inference.detections")
+    Component(http_api, "HTTP API", "FastAPI", "/infer, /infer/batch, /health, /metrics")
+}
+Container_Ext(kafka, "Kafka")
+Container_Ext(caller, "API Gateway / Clients")
+
+Rel(caller, http_api, "POST /infer")
+Rel(kafka_consumer, kafka, "Consume")
+Rel(kafka_consumer, detection_pipeline, "Frames")
+Rel(detection_pipeline, model_loader, "Infer")
+Rel(detection_pipeline, kafka_producer, "Detections")
+Rel(kafka_producer, kafka, "Produce")
+Rel(http_api, detection_pipeline, "Sync infer")
+
+@enduml
