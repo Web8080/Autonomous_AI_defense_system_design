@@ -18,7 +18,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "shared"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "services" / "auth_service"))
 
-import asyncpg  # noqa: E402
+try:
+    import asyncpg  # noqa: E402
+except ModuleNotFoundError:
+    raise SystemExit(
+        "asyncpg is not installed.\n\n"
+        "Create the project venv once:\n"
+        "    python3 -m venv .venv\n"
+        "    .venv/bin/pip install -r scripts/requirements.txt\n\n"
+        "Then run this script with it:\n"
+        "    .venv/bin/python scripts/seed_admin.py --email you@example.com --password '...'"
+    )
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://defense:defense@localhost:5432/defense")
 

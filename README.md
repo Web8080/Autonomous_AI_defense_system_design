@@ -67,10 +67,19 @@ Dashboard (Next.js)  ──REST/WS──▶  API Gateway (FastAPI, JWT + RBAC)
 1. **Prerequisites:** Docker and Docker Compose, Python 3.11, Node 20+.
 2. **Environment:** `cp .env.example .env`, then set `JWT_SECRET` to 32+ random characters. Never commit `.env`.
 3. **Start the stack:** `docker compose up -d`. The database image is `timescale/timescaledb-ha:pg16`, which bundles PostGIS — the schema requires both extensions.
-4. **Create the first admin:**
+4. **Create the first admin.** There is no self-signup; accounts are provisioned.
+   Set up the script venv once:
    ```
-   python3 scripts/seed_admin.py --email you@example.com --password '<at least 12 chars>'
+   python3 -m venv .venv
+   .venv/bin/pip install -r scripts/requirements.txt
    ```
+   Then seed:
+   ```
+   DATABASE_URL="postgresql://defense:defense@127.0.0.1:5432/defense" \
+     .venv/bin/python scripts/seed_admin.py --email you@example.com --password '<12+ chars>'
+   ```
+   The script upserts on email, so re-running it resets that account's password
+   (useful after the 5-failure, 15-minute lockout).
 5. **Dashboard:** `cd dashboard && npm install && npm run dev`, then open http://localhost:3000 and sign in with the seeded account.
 6. **Health check:** `./scripts/verify_health.sh`
 
