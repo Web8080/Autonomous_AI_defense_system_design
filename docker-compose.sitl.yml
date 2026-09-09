@@ -1,0 +1,89 @@
+# PX4 Software-In-The-Loop (SITL) + Gazebo + drone-bridge.
+#
+# Usage:
+#   docker compose -f docker-compose.sitl.yml up
+#
+# The PX4 SITL container builds and runs a Gazebo x500 quad under PX4.
+# MAVSDK (in the drone bridge) talks to it over UDP. The drone bridge then
+# looks like any other vehicle to the rest of the platform.
+#
+# First run builds PX4 from source inside the image (slow, ~10-20 min).
+# Subsequent runs reuse the build volume.
+#
+# This is a developer/integration tool, not part of the supported deploy.
+# The deterministic safety/bridge/mission behaviour is covered by unit tests
+# in backend/tests/ and the CI job; this compose is how you fly a real
+# simulated airframe locally.
+#
+# The asset UUID below is a placeholder so the drone bridge sees ONE aircraft.
+# Override DRONE_ASSETS to match an asset you actually registered:
+#   DRONE_ASSETS='{"<uuid>": {"address": "udp://px4-sitl:14540"}}' \
+#     docker compose -f docker-compose.sitl.yml up
+
+x-sitl-env: &sitl-env
+  KAFKA_BOOTSTRAP_SERVERS: redpanda:29092
+  LOG_LEVEL: INFO
+  TELEMETRY_PUBLISH_HZ: "2"
+  # One simulated aircraft. Run scripts/run_sitl.sh to set DRONE_ASSETS, or
+  # export it yourself (see comment above for overriding with a real UUID).
+  DRONE_ASSETS: "${DRONE_ASSETS:-}"
+
+services:
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=1G
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+    ports: ["9092:9092"]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # PX4 SITL + Gazebo. Builds px4_sitl and runs gz_x500 on first up.
+  px4-sitl:
+    image: px4io/px4-dev-simulation:latest
+    volumes:
+      - sitl_build:/tmp/sitl-build
+    command: >
+      bash -c "
+      cd /tmp/sitl-build &&
+      if [ ! -d /tmp/sitl-build/PX4-Autopilot ]; then
+        git clone --recursive --depth 1 https://github.com/PX4/PX4-Autopilot.git . && apt-get update &&
+        headless_px4=1 make px4_sitl gz_x500 || true
+      else
+        headless_px4=1 make px4_sitl_dummy gz_x500 || true
+      fi"
+    environment:
+      HEADLESS: "1"
+      QT_QPA_PLATFORM: offscreen
+    ports:
+      - "14540:14540/udp"   # MAVLink -> drone bridge
+      - "18570:18570/udp"   # gz bridge (optional)
+
+  drone-bridge:
+    build: { context: ./backend, dockerfile: services/drone_bridge/Dockerfile }
+    environment: *sitl-env
+    depends_on:
+      redpanda: { condition: service_healthy }
+      px4-sitl: { condition: service_started }
+    ports: ["8010:8000"]
+
+  mission-service:
+    build: { context: ./backend, dockerfile: services/mission_service/Dockerfile }
+    environment:
+      DATABASE_URL: postgresql://defense:defense@postgres:5432/defense
+      DRONE_BRIDGE_URL: http://drone-bridge:8000
+    depends_on:
+      drone-bridge: { condition: service_started }
+
+volumes:
+  sitl_build:

@@ -1,0 +1,3 @@
+# Detections persistence worker: survives on Kafka + Postgres only.
+asyncpg>=0.29
+kafka-python>=2.0

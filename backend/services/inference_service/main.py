@@ -25,8 +25,13 @@ MAX_IMAGE_B64_BYTES = int(os.getenv("MAX_IMAGE_B64_BYTES", "10485760"))
 MAX_DETECTIONS_PER_FRAME = int(os.getenv("MAX_DETECTIONS_PER_FRAME", "50"))
 MAX_BATCH_FRAMES = int(os.getenv("MAX_BATCH_FRAMES", "20"))
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+# Model registry (ml-service). The registry is the source of truth for WHICH
+# model produced a detection; loading it is non-fatal so inference still works
+# without the registry surviving, but untracked detections are labelled so.
+ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "http://ml-service:8000")
 
 model = None
+_model_meta: dict | None = None
 _kafka_consumer_task = None
 _shutdown = False
 
@@ -45,6 +50,34 @@ def load_model():
         pass
     except Exception:
         pass
+
+
+def sync_production_meta():
+    """Fetch model_id/version of the production model from the registry.
+
+    Best-effort: returns None on any failure. Detections produced without a
+    registry match are stamped 'unregistered' and the detections consumer
+    refuses to persist them, because unprovable detections cannot be training
+    labels.
+    """
+    global _model_meta
+    try:
+        import httpx
+        with httpx.Client(timeout=5.0) as client:
+            r = client.get(f"{ML_SERVICE_URL}/models/production")
+            if r.status_code != 200:
+                raise LookupError(f"registry: {r.status_code} {r.text[:200]}")
+            data = r.json()
+            _model_meta = {"model_id": data["id"], "model_version": data["version"]}
+    except Exception as exc:
+        _model_meta = None
+        print(f"inference: production model lookup failed (will stamp 'unregistered'): {exc}")
+
+
+def _model_stamp() -> dict:
+    if _model_meta:
+        return {"model_id": _model_meta["model_id"], "model_version": _model_meta["model_version"]}
+    return {"model_id": None, "model_version": "unregistered"}
 
 
 def _is_url_safe(url: str) -> bool:
@@ -68,10 +101,14 @@ def _run_inference(image_b64: str | None, image_url: str | None, asset_id: str, 
                 "frame_id": frame_id,
                 "timestamp": timestamp,
                 "class_name": "stub_threat",
-                "confidence": 0.85,
-                "threat_score": 0.7,
+                # No-model mode must not create operational alerts or training
+                # labels. threat_score 0.0 keeps it under the alert threshold;
+                # provenance "stub" makes the detections consumer discard it.
+                "confidence": 0.0,
+                "threat_score": 0.0,
                 "bbox": [0.1, 0.1, 0.3, 0.3],
-                "metadata": {},
+                "model_version": "stub",
+                "metadata": {"provenance": "stub"},
             }]
 
         img = None
@@ -97,6 +134,9 @@ def _run_inference(image_b64: str | None, image_url: str | None, asset_id: str, 
 
         results = model(img, verbose=False)
         out = []
+        stamp = _model_stamp()
+        frame_h = max(int(img.shape[0]), 1)
+        frame_w = max(int(img.shape[1]), 1)
         for r in results:
             if r.boxes is None:
                 continue
@@ -108,6 +148,18 @@ def _run_inference(image_b64: str | None, image_url: str | None, asset_id: str, 
                 cls_id = int(box.cls[0])
                 names = r.names or {}
                 class_name = names.get(cls_id, f"class_{cls_id}")
+                # bbox is stored resolution-independent ([0,1] xyxy); keep the
+                # original pixels in metadata for review tooling.
+                norm = [
+                    max(min(xyxy[0] / frame_w, 1.0), 0.0),
+                    max(min(xyxy[1] / frame_h, 1.0), 0.0),
+                    max(min(xyxy[2] / frame_w, 1.0), 0.0),
+                    max(min(xyxy[3] / frame_h, 1.0), 0.0),
+                ]
+                meta = {"bbox_px": [round(v, 3) for v in xyxy]}
+                meta.update({k: v for k, v in stamp.items() if k == "model_id" and v})
+                provenance = "production" if stamp.get("model_id") else "unregistered"
+                meta["provenance"] = provenance
                 out.append({
                     "asset_id": asset_id,
                     "frame_id": frame_id,
@@ -115,8 +167,9 @@ def _run_inference(image_b64: str | None, image_url: str | None, asset_id: str, 
                     "class_name": class_name,
                     "confidence": conf,
                     "threat_score": conf,
-                    "bbox": [xyxy[0], xyxy[1], xyxy[2], xyxy[3]],
-                    "metadata": {},
+                    "bbox": [round(v, 5) for v in norm],
+                    "model_version": stamp.get("model_version", "unregistered"),
+                    "metadata": meta,
                 })
         _metrics["inference_requests_total"] += 1
         _metrics["inference_latency_sum_ms"] += (time.perf_counter() - t0) * 1000
@@ -171,6 +224,7 @@ def _kafka_consumer_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    sync_production_meta()
     load_model()
     loop = asyncio.get_event_loop()
     global _kafka_consumer_task

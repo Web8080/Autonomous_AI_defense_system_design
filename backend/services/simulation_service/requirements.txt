@@ -1,0 +1,6 @@
+# Simulation lab service: exercises the real product pipeline with camera feeds.
+fastapi>=0.111
+uvicorn[standard]>=0.30
+kafka-python>=2.0
+Pillow>=10.0
+pydantic>=2.7

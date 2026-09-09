@@ -20,6 +20,9 @@ pytest>=7.0
 pytest-asyncio>=0.21
 httpx>=0.25
 
+# Drone Bridge (MAVSDK)
+mavsdk>=3.0
+
 # Inference (YOLO); stub works without MODEL_PATH
 torch>=2.0
 ultralytics>=8.0

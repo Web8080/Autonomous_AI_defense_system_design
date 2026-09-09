@@ -1,0 +1,8 @@
+# Drone Bridge service dependencies (kept lean: no torch/ultralytics here).
+fastapi>=0.104
+uvicorn[standard]>=0.24
+asyncpg>=0.29
+kafka-python>=2.0
+mavsdk>=3.0
+httpx>=0.25
+pydantic>=2.0

@@ -1,0 +1,7 @@
+# ML model registry service. Deliberately lean: no torch/ultralytics in the
+# service image. Training and evaluation run outside this container (GPU box);
+# this service only records provenance and certifies evals against the gate.
+fastapi>=0.104
+uvicorn[standard]>=0.24
+asyncpg>=0.29
+pydantic>=2.0

@@ -124,3 +124,72 @@ export type Alert = {
   created_at: string;
   updated_at: string;
 };
+
+export type SimulationLayers = {
+  "1": { name: string; scenario: string; available: boolean; sequences: string[]; frames_hint?: number };
+  "2": { name: string; scenarios: string[] };
+  "3": { name: string; scenario: string };
+};
+
+export type SimulationExerciseSummary = {
+  id: string;
+  layer: number;
+  scenario: string;
+  state: string;
+  fps: number;
+  frame_index: number;
+  frames_total: number | null;
+  alerts_candidates: number;
+  precision: number;
+  recall: number;
+};
+
+export type SimulationStatus = {
+  id: string;
+  layer: number;
+  scenario: string;
+  state: string;
+  fps: number;
+  frame_index: number;
+  frames_total: number | null;
+  last_error: string | null;
+  scoreboard: {
+    overall: { gt: number; tp: number; fp: number; fn: number; precision: number; recall: number; f1: number; alert_candidates: number };
+    per_class: Record<string, { gt: number; tp: number; fp: number; fn: number; precision: number; recall: number; f1: number; alert_candidates: number }>;
+  };
+  alerts: { candidates: number; threshold: number };
+  latency_ms: { p50: number | null; p95: number | null; count: number };
+  recent_frames: { frame_id: string; image_b64: string; width: number; height: number; index: number }[];
+  recent_results: {
+    frame_id: string;
+    tp: number;
+    fp: number;
+    fn: number;
+    gt: number;
+    alerts: number;
+    latency_ms: number | null;
+    detections: { class_name: string; confidence: number; bbox: number[]; threat_score: number; model_version: string; matched: boolean }[];
+    gts: { class_name: string; bbox: number[] }[];
+  }[];
+  metrics: { frames_sent: number; frames_scored: number; scoring_drain: number };
+  lessons: { kind: string; class_name?: string; hint: string; [k: string]: unknown }[];
+};
+
+export async function getSimulationLayers() {
+  return api<SimulationLayers>("/api/v1/simulation/layers");
+}
+export async function listSimulationExercises() {
+  return api<SimulationExerciseSummary[]>("/api/v1/simulation/exercises");
+}
+export async function createSimulationExercise(body: { layer: number; scenario?: string; fps?: number; sequence?: string; frames?: number; start_offset?: number }) {
+  return api<SimulationStatus>("/api/v1/simulation/exercises", { method: "POST", body: JSON.stringify(body) });
+}
+export async function getSimulationExercise(id: string) {
+  return api<SimulationStatus>(`/api/v1/simulation/exercises/${id}`);
+}
+export async function stopSimulationExercise(id: string) {
+  return api<{ ok: boolean; id: string }>(`/api/v1/simulation/exercises/${id}/stop`, { method: "POST" });
+}
+export async function ingestSimulationFrame(id: string, body: { image_b64: string; gt: { class_name: string; bbox: number[] }[]; width: number; height: number }) {
+  return api<{ frame_id: string; queue_depth: number }>(`/api/v1/simulation/exercises/${id}/ingest`, { method: "POST", body: JSON.stringify(body) });
+}

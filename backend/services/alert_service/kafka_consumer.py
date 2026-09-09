@@ -28,6 +28,11 @@ def run():
             payload = json.loads(msg.value.decode())
             detections = payload if isinstance(payload, list) else payload.get("detections", [payload])
             for d in detections:
+                # No-model / stub detections must never create an operational
+                # alert, regardless of what the producer claimed. Synthetic
+                # alerts for "stub_threat" are what the pre-registry build did.
+                if d.get("metadata", {}).get("provenance") == "stub":
+                    continue
                 threat_score = d.get("threat_score") or d.get("confidence", 0)
                 if threat_score < THREAT_THRESHOLD:
                     continue

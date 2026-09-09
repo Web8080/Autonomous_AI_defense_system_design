@@ -1,0 +1,2 @@
+# Drone Bridge — MAVSDK control plane
+mavsdk>=3.0

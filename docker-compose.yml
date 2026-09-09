@@ -77,6 +77,16 @@ services:
       redpanda: { condition: service_healthy }
     ports: ["8002:8000"]
 
+  # Persists the drone bridge's telemetry.raw stream into TimescaleDB.
+  telemetry-consumer:
+    build: { context: ./backend, dockerfile: services/telemetry_service/Dockerfile }
+    environment:
+      <<: [*db-env, *broker-env]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redpanda: { condition: service_healthy }
+    command: ["python", "kafka_consumer.py"]
+
   alert-service:
     build: { context: ./backend, dockerfile: services/alert_service/Dockerfile }
     environment:
@@ -90,18 +100,78 @@ services:
     build: { context: ./backend, dockerfile: services/control_service/Dockerfile }
     environment:
       <<: [*db-env, *broker-env]
+      DRONE_BRIDGE_URL: http://drone-bridge:8000
     depends_on:
       postgres: { condition: service_healthy }
+      drone-bridge: { condition: service_started }
     ports: ["8004:8000"]
+
+  mission-service:
+    build: { context: ./backend, dockerfile: services/mission_service/Dockerfile }
+    environment:
+      <<: *db-env
+      DRONE_BRIDGE_URL: http://drone-bridge:8000
+    depends_on:
+      postgres: { condition: service_healthy }
+      drone-bridge: { condition: service_started }
+    ports: ["8007:8000"]
+
+  drone-bridge:
+    build: { context: ./backend, dockerfile: services/drone_bridge/Dockerfile }
+    environment:
+      <<: *broker-env
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DRONE_ASSETS: ${DRONE_ASSETS:-{}}
+      TELEMETRY_PUBLISH_HZ: ${TELEMETRY_PUBLISH_HZ:-2}
+      MISSION_SERVICE_URL: http://mission-service:8000
+    depends_on:
+      redpanda: { condition: service_healthy }
+    ports: ["8010:8000"]
 
   inference-service:
     build: { context: ./backend, dockerfile: services/inference_service/Dockerfile }
     environment:
       <<: *broker-env
       MODEL_PATH: ${MODEL_PATH:-}
+      ML_SERVICE_URL: http://ml-service:8000
     depends_on:
       redpanda: { condition: service_healthy }
+      ml-service: { condition: service_started }
     ports: ["8005:8000"]
+
+  # Model registry: provenance, evaluation gate, promotion. The registry is the
+  # source of truth for WHICH model produced a detection.
+  ml-service:
+    build: { context: ./backend, dockerfile: services/ml_service/Dockerfile }
+    environment:
+      <<: *db-env
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["8011:8000"]
+
+  # Persists detections.detections (the training-data capture path) from the
+  # inference pipeline. Skips stub and unprovable detections.
+  detections-consumer:
+    build: { context: ./backend, dockerfile: services/detections_service/Dockerfile }
+    environment:
+      <<: [*db-env, *broker-env]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redpanda: { condition: service_healthy }
+
+# Simulation lab: drives the real camera-feed path (inference.frames) with
+  # layer-1 real footage, layer-2 synthetic scenes, or layer-3 live 3D ingest.
+  # It exists to validate the production model/pipeline before hardware flights.
+  simulation-service:
+    build: { context: ./backend, dockerfile: services/simulation_service/Dockerfile }
+    environment:
+      <<: *broker-env
+      SIM_CORPUS_MANIFEST: /mnt/corpus/corpus.json
+    volumes:
+      - ./data/visdrone-yolo/corpus:/mnt/corpus:ro
+    depends_on:
+      redpanda: { condition: service_healthy }
+    ports: ["8014:8014"]
 
   auth-service:
     build: { context: ./backend, dockerfile: services/auth_service/Dockerfile }
@@ -123,7 +193,10 @@ services:
       TELEMETRY_SERVICE_URL: http://telemetry-service:8000
       ALERT_SERVICE_URL: http://alert-service:8000
       CONTROL_SERVICE_URL: http://control-service:8000
+      MISSION_SERVICE_URL: http://mission-service:8000
       INFERENCE_SERVICE_URL: http://inference-service:8000
+      ML_SERVICE_URL: http://ml-service:8000
+      SIMULATION_SERVICE_URL: http://simulation-service:8014
       AUTH_SERVICE_URL: http://auth-service:8000
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       JWT_SECRET: ${JWT_SECRET:-dev_secret_change_in_prod_min_32_chars_required}
@@ -136,7 +209,10 @@ services:
       - telemetry-service
       - alert-service
       - control-service
+      - mission-service
       - inference-service
+      - ml-service
+      - simulation-service
       - auth-service
     ports: ["8000:8000"]
 

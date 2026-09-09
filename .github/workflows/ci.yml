@@ -77,7 +77,12 @@ jobs:
           - telemetry_service
           - alert_service
           - control_service
+          - mission_service
+          - drone_bridge
           - inference_service
+          - ml_service
+          - detections_service
+          - simulation_service
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.service }}

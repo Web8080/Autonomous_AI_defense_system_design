@@ -4,6 +4,7 @@
 *.pyc
 __pycache__/
 .venv/
+.venv-ml/
 venv/
 node_modules/
 .next/
@@ -14,6 +15,11 @@ build/
 metrics/
 runs/
 weights/
-data/raw/
+# Model artifacts and the VisDrone payload stay out of the repo: the dataset
+# is ~2GB and (critically) AISKYEYE licenses VisDrone for research only, so it
+# must never be distributed through this repository. Provenance hashes in
+# `manifests/` are the auditable record instead.
+data/
 *.pt
+*.pth
 !backend/db/schema/*.sql

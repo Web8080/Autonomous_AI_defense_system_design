@@ -37,6 +37,10 @@ SERVICE_URLS = {
     "control": os.getenv("CONTROL_SERVICE_URL", "http://localhost:8004"),
     "inference": os.getenv("INFERENCE_SERVICE_URL", "http://localhost:8005"),
     "auth": os.getenv("AUTH_SERVICE_URL", "http://localhost:8006"),
+    "mission": os.getenv("MISSION_SERVICE_URL", "http://localhost:8007"),
+    "ml": os.getenv("ML_SERVICE_URL", "http://localhost:8011"),
+    "drone_bridge": os.getenv("DRONE_BRIDGE_URL", "http://localhost:8010"),
+    "simulation": os.getenv("SIMULATION_SERVICE_URL", "http://localhost:8014"),
 }
 
 
@@ -304,7 +308,371 @@ async def inference_health(
         return r.json()
 
 
+# ---------------------------------------------------------------------------
+# Missions and flights (Phase 1): mission planning + human-approved dispatch
+# ---------------------------------------------------------------------------
+
+@app.get("/api/v1/missions")
+async def list_missions(
+    request: Request,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+    site_id: str | None = None,
+    org_id: str | None = None,
+    active: bool | None = None,
+) -> dict:
+    params = {"site_id": site_id, "org_id": org_id, "active": active}
+    params = {k: v for k, v in params.items() if v is not None}
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{SERVICE_URLS['mission']}/missions",
+            params=params, headers=_proxy_headers(user), timeout=10.0,
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/missions", status_code=201)
+async def create_mission(
+    body: dict,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['mission']}/missions",
+            json=body, headers=_proxy_headers(user), timeout=10.0,
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/missions/{mission_id}")
+async def get_mission(
+    mission_id: str,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{SERVICE_URLS['mission']}/missions/{mission_id}",
+            headers=_proxy_headers(user), timeout=10.0,
+        )
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Mission not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.patch("/api/v1/missions/{mission_id}")
+async def update_mission(
+    mission_id: str, body: dict,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.patch(
+            f"{SERVICE_URLS['mission']}/missions/{mission_id}",
+            json=body, headers=_proxy_headers(user), timeout=10.0,
+        )
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Mission not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.put("/api/v1/missions/{mission_id}/waypoints")
+async def replace_waypoints(
+    mission_id: str, body: list[dict],
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.put(
+            f"{SERVICE_URLS['mission']}/missions/{mission_id}/waypoints",
+            json=body, headers=_proxy_headers(user), timeout=10.0,
+        )
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Mission not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/flights")
+async def list_flights(
+    request: Request,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+    asset_id: str | None = None,
+    mission_id: str | None = None,
+    status: str | None = None,
+) -> dict:
+    params = {"asset_id": asset_id, "mission_id": mission_id, "status": status}
+    params = {k: v for k, v in params.items() if v is not None}
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{SERVICE_URLS['mission']}/flights",
+            params=params, headers=_proxy_headers(user), timeout=10.0,
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/flights", status_code=201)
+async def create_flight(
+    body: dict,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['mission']}/flights",
+            json=body, headers=_proxy_headers(user), timeout=10.0,
+        )
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail=r.json().get("detail", "Not found"))
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/flights/{flight_id}/approve")
+async def approve_flight(
+    flight_id: str, body: dict,
+    request: Request,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    """The human oversight gate. The approver's identity is recorded."""
+    if "approved_by" not in body:
+        raise HTTPException(status_code=400, detail="approved_by (user UUID) is required")
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['mission']}/flights/{flight_id}/approve",
+            json=body, headers=_proxy_headers(user), timeout=10.0,
+        )
+        if r.status_code == 409:
+            raise HTTPException(status_code=409, detail=r.json().get("detail", "Cannot approve"))
+        r.raise_for_status()
+        out = r.json()
+    audit_log(request, user["id"], "flight_approve", "mission", flight_id)
+    return out
+
+
+@app.post("/api/v1/flights/{flight_id}/start")
+async def start_flight(
+    flight_id: str, body: dict,
+    request: Request,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    """Dispatch an approved flight to the drone bridge."""
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['mission']}/flights/{flight_id}/start",
+            json=body, headers=_proxy_headers(user), timeout=20.0,
+        )
+        if r.status_code == 403:
+            raise HTTPException(status_code=403, detail=r.json().get("detail", "Not approved"))
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Flight not found")
+        r.raise_for_status()
+        out = r.json()
+    audit_log(request, user["id"], "flight_start", "mission", flight_id)
+    return out
+
+
 REPLAY_DIR = os.getenv("REPLAY_DIR", "")
+
+
+# ---------------------------------------------------------------------------
+# Model registry (Phase 2): provenance, evaluation, promotion.
+# Approval-equivalent guarantee: /promote records the acting user, mirroring
+# the flight approval gate.
+# ---------------------------------------------------------------------------
+
+@app.get("/api/v1/models")
+async def list_models(
+    stage: str | None = None,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    params = {"stage": stage} if stage else None
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['ml']}/models", params=params, timeout=10.0)
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/models", status_code=201)
+async def register_model(
+    body: dict,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(f"{SERVICE_URLS['ml']}/models", json=body, timeout=10.0)
+        if r.status_code == 422:
+            raise HTTPException(status_code=422, detail=r.json().get("detail", "Invalid model"))
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/models/production")
+async def get_production_model(
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """The model the fleet is certified to run right now (or 404)."""
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['ml']}/models/production", timeout=5.0)
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail=r.json().get("detail", "No production model"))
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/models/{model_id}")
+async def get_model(
+    model_id: str,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['ml']}/models/{model_id}", timeout=5.0)
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Model not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/models/{model_id}/evals")
+async def list_model_evals(
+    model_id: str,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['ml']}/models/{model_id}/evals", timeout=10.0)
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/models/{model_id}/evals", status_code=201)
+async def record_model_eval(
+    model_id: str,
+    body: dict,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['ml']}/models/{model_id}/evals",
+            json=body, timeout=10.0,
+        )
+        if r.status_code == 422:
+            raise HTTPException(status_code=422, detail=r.json().get("detail", "Invalid eval"))
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/models/{model_id}/promote")
+async def promote_model(
+    model_id: str,
+    body: dict,
+    request: Request,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN)),
+) -> dict:
+    """The recorded human promotion decision. Gate evaluation runs server-side."""
+    if "promoted_by" not in body:
+        raise HTTPException(status_code=400, detail="promoted_by (user UUID) is required")
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['ml']}/models/{model_id}/promote",
+            json=body, timeout=10.0,
+        )
+        if r.status_code == 403:
+            raise HTTPException(status_code=403, detail=r.json().get("detail", "Gate not satisfied"))
+        if r.status_code == 409:
+            raise HTTPException(status_code=409, detail=r.json().get("detail", "Promotion refused"))
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Model not found")
+        r.raise_for_status()
+        out = r.json()
+    audit_log(request, user["id"], "model_promote", "ml", model_id)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Drone bridge status (aircraft live state)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/v1/drones")
+async def list_drones(
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['drone_bridge']}/vehicles", timeout=5.0)
+        if r.status_code >= 500:
+            raise HTTPException(status_code=502, detail="Drone bridge unreachable")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/drones/{asset_id}")
+async def get_drone_state(
+    asset_id: str,
+    user: dict = Depends(require_role(Role.SUPER_ADMIN, Role.LOCAL_OPERATOR)),
+) -> dict:
+    if not validate_asset_id(asset_id):
+        raise HTTPException(status_code=400, detail="Invalid asset_id")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['drone_bridge']}/vehicles/{asset_id}", timeout=5.0)
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/simulation/layers")
+async def simulate_layers(user: dict = Depends(get_current_user)) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['simulation']}/layers", timeout=5.0)
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/simulation/exercises")
+async def list_exercises(user: dict = Depends(get_current_user)) -> list:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['simulation']}/exercises", timeout=8.0)
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/simulation/exercises", status_code=201)
+async def create_exercise(body: dict, user: dict = Depends(get_current_user)) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(f"{SERVICE_URLS['simulation']}/exercises", json=body, timeout=15.0)
+        r.raise_for_status()
+        return r.json()
+
+
+@app.get("/api/v1/simulation/exercises/{exercise_id}")
+async def exercise_status(exercise_id: str, user: dict = Depends(get_current_user)) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{SERVICE_URLS['simulation']}/exercises/{exercise_id}", timeout=60.0)
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Exercise not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/simulation/exercises/{exercise_id}/stop")
+async def stop_exercise(exercise_id: str, user: dict = Depends(get_current_user)) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(f"{SERVICE_URLS['simulation']}/exercises/{exercise_id}/stop", timeout=10.0)
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Exercise not found")
+        r.raise_for_status()
+        return r.json()
+
+
+@app.post("/api/v1/simulation/exercises/{exercise_id}/ingest", status_code=201)
+async def ingest_exercise_frame(exercise_id: str, body: dict, user: dict = Depends(get_current_user)) -> dict:
+    """Layer-3 frame ingest: a rendered 3D-world frame enters the real pipeline."""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        r = await client.post(
+            f"{SERVICE_URLS['simulation']}/exercises/{exercise_id}/ingest", json=body, timeout=30.0
+        )
+        if r.status_code == 404:
+            raise HTTPException(status_code=404, detail="Exercise not found")
+        r.raise_for_status()
+        return r.json()
 
 
 @app.get("/api/v1/simulation/replay")
