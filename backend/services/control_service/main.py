@@ -2,6 +2,7 @@
 Control service: issue commands to assets (emergency stop, override, path plan).
 Logs every command to audit.command_log. MQTT/WebSocket/ROS are placeholders.
 """
+import json
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -75,7 +76,7 @@ async def emergency_stop(
         CommandIntent.EMERGENCY_STOP.value,
         issued_by,
         True,
-        {"scope": asset_id},
+        json.dumps({"scope": asset_id}),
         result,
     )
     return {"ok": True, "scope": asset_id, "result": result}
@@ -109,7 +110,7 @@ async def send_command(
         body.intent.value,
         issued_by,
         body.is_override,
-        body.payload,
+        json.dumps(body.payload),
         result,
     )
     return {"ok": True, "asset_id": body.asset_id, "intent": body.intent.value, "result": result}
@@ -141,7 +142,7 @@ async def list_audit(
             "intent": r["intent"],
             "issued_by": r["issued_by"],
             "is_override": r["is_override"],
-            "payload": r["payload"],
+            "payload": json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"],
             "result": r["result"],
             "created_at": r["created_at"].isoformat(),
         }

@@ -35,6 +35,7 @@ SERVICE_URLS = {
     "alert": os.getenv("ALERT_SERVICE_URL", "http://localhost:8003"),
     "control": os.getenv("CONTROL_SERVICE_URL", "http://localhost:8004"),
     "inference": os.getenv("INFERENCE_SERVICE_URL", "http://localhost:8005"),
+    "auth": os.getenv("AUTH_SERVICE_URL", "http://localhost:8006"),
 }
 
 
@@ -53,8 +54,8 @@ def get_current_user(
         if not sub:
             raise HTTPException(status_code=401, detail="Invalid token payload")
         return {"id": sanitize_issued_by(sub), "email": payload.get("email", ""), "role": role, "region_ids": list(region_ids)[:50]}
-    if os.getenv("ALLOW_DEV_TOKEN") == "true" and token == "dev-token":
-        return {"id": "dev-user", "email": "dev@local", "role": Role.SUPER_ADMIN.value, "region_ids": []}
+    # The former ALLOW_DEV_TOKEN / "dev-token" escape hatch granted super_admin
+    # to any caller and has been removed. Obtain a real token from auth-service.
     raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
@@ -86,6 +87,52 @@ async def health() -> dict:
 
 def _proxy_headers(user: dict) -> dict[str, str]:
     return {"X-User-Id": user["id"], "X-User-Role": user["role"], "X-Region-Ids": ",".join(user.get("region_ids") or [])}
+
+
+@app.post("/api/v1/auth/login")
+async def auth_login(body: dict, request: Request) -> dict:
+    """Unauthenticated by design. Rate limited by RateLimitMiddleware (path contains 'login')."""
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['auth']}/login",
+            json=body,
+            headers={"user-agent": request.headers.get("user-agent", "")},
+            timeout=10.0,
+        )
+    if r.status_code >= 400:
+        raise HTTPException(status_code=r.status_code, detail=r.json().get("detail", "Login failed"))
+    return r.json()
+
+
+@app.post("/api/v1/auth/refresh")
+async def auth_refresh(body: dict, request: Request) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{SERVICE_URLS['auth']}/refresh",
+            json=body,
+            headers={"user-agent": request.headers.get("user-agent", "")},
+            timeout=10.0,
+        )
+    if r.status_code >= 400:
+        raise HTTPException(status_code=r.status_code, detail=r.json().get("detail", "Refresh failed"))
+    return r.json()
+
+
+@app.post("/api/v1/auth/logout")
+async def auth_logout(body: dict) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.post(f"{SERVICE_URLS['auth']}/logout", json=body, timeout=10.0)
+    return r.json() if r.status_code < 400 else {"ok": True}
+
+
+@app.get("/api/v1/auth/me")
+async def auth_me(user: dict = Depends(get_current_user)) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{SERVICE_URLS['auth']}/me", headers=_proxy_headers(user), timeout=10.0
+        )
+        r.raise_for_status()
+        return r.json()
 
 
 @app.get("/api/v1/assets")

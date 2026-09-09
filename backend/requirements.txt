@@ -25,3 +25,7 @@ torch>=2.0
 ultralytics>=8.0
 pillow>=10.0
 numpy>=1.24
+
+# Auth
+argon2-cffi>=23.1
+email-validator>=2.1

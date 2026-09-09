@@ -2,33 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setSession } from "@/lib/auth";
+import { login } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"super_admin" | "local_operator">("super_admin");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const useDevToken =
-      apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1");
+    setBusy(true);
     try {
-      const res = await fetch(`${apiUrl}/health`);
-      if (!res.ok) throw new Error("API unreachable");
-      setSession(useDevToken ? "dev-token" : "stub-token-" + Date.now(), role);
+      await login(email, password);
       router.push("/dashboard");
     } catch (err) {
-      if (useDevToken) {
-        setSession("dev-token", role);
-        router.push("/dashboard");
-      } else {
-        setError(err instanceof Error ? err.message : "Login failed");
-      }
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -41,6 +34,7 @@ export default function LoginPage() {
           <input
             id="email"
             type="email"
+            autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -52,29 +46,18 @@ export default function LoginPage() {
           <input
             id="password"
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
             style={{ display: "block", width: "100%", marginTop: 4 }}
           />
         </div>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="role">Role</label>
-          <select
-            id="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value as "super_admin" | "local_operator")}
-            style={{ display: "block", width: "100%", marginTop: 4 }}
-          >
-            <option value="super_admin">Super Admin</option>
-            <option value="local_operator">Local Operator</option>
-          </select>
-        </div>
         {error && <p style={{ color: "#f85149", marginBottom: "1rem" }}>{error}</p>}
-        <button type="submit">Sign in</button>
+        <button type="submit" disabled={busy}>
+          {busy ? "Signing in..." : "Sign in"}
+        </button>
       </form>
-      <p style={{ marginTop: "1rem", fontSize: 14 }}>
-        Local dev: uses dev-token when API is localhost (set ALLOW_DEV_TOKEN=true on gateway). Prod: use real JWT from auth service.
-      </p>
     </main>
   );
 }

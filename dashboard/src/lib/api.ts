@@ -1,28 +1,43 @@
 /**
- * API client for defense backend. All requests use API_URL from env.
- * Auth: Bearer token from session/localStorage (set after login).
+ * API client. Attaches the access token, and on a 401 attempts one silent
+ * refresh before surfacing the error, so a 15-minute access TTL is invisible
+ * to the operator mid-shift.
  */
+
+import { getAccessToken, refreshSession, clearSession } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("defense_token");
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {
+async function request<T>(path: string, options: RequestInit, retry: boolean): Promise<T> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string> | undefined),
   };
-  if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
-  if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+
+  if (res.status === 401 && retry) {
+    if (await refreshSession()) return request<T>(path, options, false);
+    clearSession();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError("Session expired", 401);
+  }
+  if (!res.ok) {
+    throw new ApiError(await res.text().catch(() => res.statusText), res.status);
+  }
   return res.json() as Promise<T>;
+}
+
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return request<T>(path, options, true);
 }
 
 export async function listAssets(params?: { region_id?: string; status?: string }) {

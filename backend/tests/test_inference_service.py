@@ -3,8 +3,9 @@ from httpx import ASGITransport, AsyncClient
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "services", "inference_service"))
-from main import app
+from conftest import load_service_app
+
+app = load_service_app("inference_service")
 
 
 @pytest.mark.asyncio

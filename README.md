@@ -1,100 +1,113 @@
-# Autonomous AI Defense System for Critical Infrastructure
+# Drone Infrastructure Monitoring
 
 ![Banner](.github/social-preview.jpg)
 
-## Purpose and Product Context
+Autonomous drone patrol and anomaly detection for critical infrastructure: rail corridors, electrical substations, solar and wind farms, ports, reservoirs and industrial perimeters.
 
-This system provides integrated autonomous surveillance and response for critical infrastructure. It detects threats in real time from fused sensor data (cameras, LIDAR, radar, IoT), runs AI-powered computer vision (YOLO/PyTorch), and supports autonomous deployment of drones and ground vehicles within safety constraints. Operators (Super Admin and Local Operator) monitor, intervene, and audit all actions.
+Drones fly scheduled or operator-triggered missions. Onboard computer vision detects intrusions, trespass, vegetation encroachment and equipment faults. Operators get a live map, live video, an alert queue and a full audit trail. **Every dispatch is approved by a human before the aircraft arms.**
 
-Primary users: security operators who need full visibility and override; local operators who supervise a region; and the System AI agent that makes bounded autonomous decisions. The system is built for local simulation and emulation first, with optional cloud (AWS) and hardware integration via placeholders and explicit credential requests.
+## What this replaces
 
-## Architecture Overview
+Sites of this kind are inspected today by walking patrols, manned vehicle rounds and periodic helicopter or rope-access surveys. Those are expensive, infrequent and dangerous. A drone flying a fixed patrol four times a night covers more ground, more often, with a consistent record of what it saw.
 
-- **API Gateway**: Auth, RBAC, REST and WebSocket; proxies to backend services.
-- **Asset Service**: CRUD and status for drones, vehicles, sensors; region-scoped for local operators.
-- **Telemetry Service**: Ingest from Kafka, aggregate, store in PostgreSQL, serve queries.
-- **Inference Service**: YOLO/PyTorch threat detection; consumes frames from Kafka or HTTP, publishes detections.
-- **Alert Service**: Consumes detections and rules; creates alerts; persists and notifies.
-- **Control Service**: Emergency stop, override, path plan; audit log; MQTT/WebSocket/ROS placeholders.
-- **Dashboard**: Next.js; map, assets, alerts, control, admin (Super Admin); login and role-based views.
-- **Simulation**: Agent and sensor emulators publish to Kafka for testing without hardware.
-- **AI Pipelines**: Training and fine-tuning scripts (local/S3/Roboflow); drift detection and retrain triggers.
+## Product boundary
 
-Data flow: sensors and simulators push telemetry to Kafka; telemetry service persists aggregates; inference consumes frames and produces detections; alert service creates alerts; control service issues commands to assets (real or simulated). All credentials and cloud/hardware access use env placeholders; operators must supply secrets before use.
+This system observes and alerts. It does not take autonomous physical action against anything.
 
-Tech stack: PyTorch, YOLO (ultralytics), FastAPI, PostgreSQL, Redis, Kafka, Docker, Kubernetes, Terraform, AWS (optional), Celery, Prometheus/Grafana (scaffolded).
+- No lethal, kinetic or irreversible autonomous action, ever.
+- No autonomous dispatch without a named human approving it first. The approval is recorded against the flight.
+- No real-time biometric identification. Faces and number plates are blurred at the edge by default.
 
-## Key Workflows
+These are product constraints, not defaults to be configured away.
 
-- **Threat detection**: Telemetry/frames -> Kafka -> inference -> detections -> alerts and optional autonomous agent -> control commands.
-- **Operator override**: Dashboard -> API gateway -> control service -> audit log and MQTT/asset.
-- **Emergency stop**: Dedicated endpoint -> control service -> immediate command to assets; always logged.
-- **Training and drift**: Local or S3/Roboflow datasets -> train_yolo / finetune; metrics -> drift_detector -> optional retrain_trigger. Training is script-based (Python); no Jupyter notebooks.
+## Architecture
 
-See `docs/phase0/07-ai-decision-flows.md` for detailed AI and operator flows.
+```
+Dashboard (Next.js)  ──REST/WS──▶  API Gateway (FastAPI, JWT + RBAC)
+                                        │
+        ┌───────────┬───────────┬───────┴───┬───────────┬───────────┐
+      Auth       Asset      Mission      Alert     Telemetry    Control
+                                        │
+                              Redpanda (Kafka API)
+                                        │
+                            ┌───────────▼───────────┐
+                            │   Drone Bridge        │
+                            │   MAVLink / MAVSDK    │
+                            └───────┬───────┬───────┘
+                                    │       │
+                        PX4 SITL + Gazebo   Pixhawk + Jetson Orin
+                          (dev and CI)      (edge inference, TensorRT)
+```
 
-## Setup Instructions
+**Services**
+- **Auth** — issues short-lived access JWTs and rotating, revocable refresh tokens. Accounts are provisioned, not self-signup.
+- **API Gateway** — verifies JWT signature, issuer, audience and expiry; enforces RBAC; forwards site scoping downstream.
+- **Asset** — drones, ground vehicles, sensors. Site-scoped for operators.
+- **Mission** — waypoints, schedules, geofences, monitored zones.
+- **Telemetry** — vehicle state at high rate into TimescaleDB hypertables.
+- **Inference** — YOLO detection. Runs at the edge in production; cloud only for backfill and evaluation.
+- **Alert** — turns detections plus deterministic zone rules into operator alerts.
+- **Control** — commands, emergency stop, and the append-only audit trail.
+- **Drone Bridge** — MAVLink both ways; geofence, link-loss and battery failsafes.
 
-1. **Prerequisites**: Docker and Docker Compose, Python 3.11, Node 20 (for dashboard), Kafka (included in Compose).
-2. **Clone and env**: Copy `.env.example` to `.env` and set at least `DATABASE_URL`, `REDIS_URL`, `KAFKA_BOOTSTRAP_SERVERS`, `JWT_SECRET`. Do not commit `.env`.
-3. **Backend**: From repo root, run `./scripts/run_local.sh` to start Postgres, Redis, Kafka, and all backend services. Or run `docker compose up -d` then start services manually.
-4. **Database**: Schema is applied via `backend/db/schema/01_init.sql` when Postgres first starts (Docker volume).
-5. **Dashboard (local)**: From repo root run `./scripts/launch_dashboard.sh` to install dependencies, copy the simulation replay into the dashboard, and start the dev server. Then open http://localhost:3000, log in with any email/password, and go to **Simulation** to watch the railway replay. Alternatively: `cd dashboard && npm install && npm run dev`.
-6. **Verification**: `./scripts/verify_health.sh` (requires API on port 8000).
+**Stack:** FastAPI, TimescaleDB + PostGIS, Redis, Redpanda, PyTorch/Ultralytics, TensorRT, MAVSDK, PX4, Next.js, MapLibre, Docker, Kubernetes.
 
-## Security and Safeguardrails
+## Design decisions worth knowing
 
-- **OWASP Top 10**: Mitigations are documented in `docs/security/OWASP-TOP10.md` (access control, crypto, injection, rate limit, security headers, SSRF, audit logging, etc.).
-- **AI safeguardrails**: Intent allowlist, forbidden intents, payload size/depth limits, inference input caps and URL allowlist. See `docs/security/AI-SAFEGUARDRAILS.md`.
-- **Auth**: JWT with issuer/audience/expiry; set `JWT_SECRET` (32+ chars). Local dev: set `ALLOW_DEV_TOKEN=true` and use Bearer `dev-token` from dashboard when API is localhost. Generate a real JWT with `scripts/gen_jwt_dev.py` if needed.
+**Zone logic and tracking are deliberately not machine learning.** Whether a detection sits inside a restricted polygon is a PostGIS containment query, and object tracking is ByteTrack. Both are deterministic and explainable. A neural network there would buy nothing and cost the ability to say exactly why an alert fired — which is the thing an operator and a regulator both want to know.
 
-## Configuration
+**Inference runs on the aircraft, not in the cloud.** Shipping video over LTE to a cloud GPU is fine in simulation and unworkable in the field. Only detections and thumbnails go up.
 
-- **Required**: `DATABASE_URL`, `REDIS_URL`, `KAFKA_BOOTSTRAP_SERVERS`, `JWT_SECRET` (32+ chars), `JWT_ALGORITHM`. See `docs/phase0/06-environment-and-secrets.md`.
-- **Optional**: AWS_* (S3, credentials), ROBOFLOW_* (datasets), MQTT_* and DRONE_* (hardware). Never commit secrets; use `.env` or a secret manager.
-- **Dashboard**: `NEXT_PUBLIC_API_URL` for API base URL.
+**mAP is not the product metric.** The number that decides whether a site keeps the system switched on is *false alarms per flight hour at target recall*. A perimeter system that cries wolf forty times a night gets unplugged regardless of its benchmark score. Model promotion gates on both.
 
-## Failure Modes
+**Every model that flies is traceable.** Model rows carry the git SHA, dataset hash and MLflow run that produced them, and no model reaches `production` stage without a recorded evaluation against the frozen benchmark.
 
-- **Kafka down**: Telemetry and inference ingestion pause; replay after recovery. Emergency stop path does not depend on Kafka.
-- **Inference down**: No new detections; alerts and control still work; operators can override.
-- **Postgres down**: All services that persist state are unavailable; bring DB back and restart services.
-- **Control service down**: Commands and emergency stop fail until restored; design heartbeat so assets can enter safe state if control is lost.
+## Setup
 
-## Debugging Tips
+1. **Prerequisites:** Docker and Docker Compose, Python 3.11, Node 20+.
+2. **Environment:** `cp .env.example .env`, then set `JWT_SECRET` to 32+ random characters. Never commit `.env`.
+3. **Start the stack:** `docker compose up -d`. The database image is `timescale/timescaledb-ha:pg16`, which bundles PostGIS — the schema requires both extensions.
+4. **Create the first admin:**
+   ```
+   python3 scripts/seed_admin.py --email you@example.com --password '<at least 12 chars>'
+   ```
+5. **Dashboard:** `cd dashboard && npm install && npm run dev`, then open http://localhost:3000 and sign in with the seeded account.
+6. **Health check:** `./scripts/verify_health.sh`
 
-- **API 502**: Backend service unreachable; check Docker Compose or service URLs in gateway env.
-- **Dashboard "API unreachable"**: Ensure backend is up and `NEXT_PUBLIC_API_URL` matches.
-- **Tests**: Backend unit tests from `backend/`: `pip install -r requirements.txt && pytest tests/`. Some tests expect DB; use Docker Postgres or ignore DB-dependent tests.
-- **Simulation**: Run `./scripts/run_simulation.sh` after Kafka is up; check Kafka topics with `kafka-console-consumer`.
+## Security
 
-## Explicit Non-Goals
+- **Authentication:** access tokens are HS256 JWTs verified for signature, issuer, audience and expiry, with a 15-minute TTL. Refresh tokens are stored hashed, rotate on every use, and are revocable. Failed logins lock the account after 5 attempts.
+- **Authorization:** RBAC at the gateway; site scoping derived from signed token claims, never from client-supplied headers.
+- **OWASP Top 10:** see `docs/security/OWASP-TOP10.md`.
+- **AI safeguards:** intent allowlist, payload size and depth caps, inference input caps, SSRF URL allowlist. See `docs/security/AI-SAFEGUARDRAILS.md`.
 
-- No lethal or irreversible autonomous action; all high-impact actions require operator approval or are out of scope.
-- No production deployment or hardware connection without operator-provided credentials and approval.
-- This scaffold does not replace full auth (e.g. NextAuth); login is placeholder for development.
+## Compliance
 
-## Known Debt
+Operating this system in the UK or EU carries obligations that are engineering work, not just paperwork:
 
-- JWT validation in API gateway is stub (accepts any Bearer token).
-- Inference service runs stub detections when no model is mounted; wire real YOLO and MODEL_PATH for production.
-- Helm chart has minimal templates; expand per service for full K8s deploy.
-- Terraform has placeholder resources; add EKS, RDS, S3, IAM after account/region are approved.
-- E2E tests assume backend and dashboard running; CI runs unit tests and dashboard build only.
+- **EU AI Act** — AI used as a safety component for critical infrastructure is high-risk; core obligations apply from 2 August 2026. The model registry, evaluation gate, dataset versioning and decision-chain audit log exist to satisfy the risk-management, data-governance, logging and human-oversight duties.
+- **UK GDPR** — aerial surveillance capable of capturing identifiable people requires a DPIA, refreshed when operations change. Edge redaction is on by default.
+- **UK CAA** — Operator ID and Flyer ID required. Remote ID is mandatory for class-marked drones from 1 January 2026. BVLOS operation requires Specific-category authorisation via SORA; assume 3 to 6 months.
 
-## What's next
+## Known gaps
 
-**Summary:** The next concrete step is run the full stack (backend + dashboard) and smoke-test Control and Simulation. After that, the highest-value "what is next" items are real JWT validation and real inference (YOLO).
+Tracked honestly, because the repo previously overstated its own completeness.
 
-## Screenshots
+- Drone Bridge Service is not built yet; `control_service._send_to_asset()` still returns without transmitting. **No real aircraft can be commanded.** (Phase 1)
+- Inference returns a stub detection when `MODEL_PATH` is unset. There is no trained model yet. (Phase 2)
+- No evaluation harness, benchmark set or promotion gate yet. (Phase 2)
+- Dashboard is functional but pre-rebuild: no map, no live video, no mission planner. (Phase 3)
+- Helm templates are minimal and Terraform is placeholder. Compose is the supported deployment today.
+- `assets.region_id` is retained as a legacy bridge alongside `site_id` and will be dropped in Phase 1.
 
-### Dashboard map
-![Operations map with assets and alerts](./screenshots/dashboard-map.png)
+## Roadmap
 
-### Control and emergency stop
-![Control page with emergency stop buttons](./screenshots/dashboard-control.png)
-
-### Scenario simulation
-Railway line replay with agent trails and zones: play/pause timeline, agent positions and status.
-
-![Scenario simulation dashboard](./screenshots/scenario_simulation_dashboard.png)
+| Phase | Scope | Status |
+|---|---|---|
+| 0 | Tenancy schema, real auth, TimescaleDB/PostGIS, Redpanda | In progress |
+| 1 | Drone Bridge, MAVSDK, PX4 SITL in CI, mission execution | Next |
+| 2 | VisDrone training pipeline, evaluation gate, model registry | |
+| 3 | Dashboard rebuild: map, live video, mission planner, triage | |
+| 4 | TensorRT edge deployment, Jetson, real airframe | |
+| 5 | Multi-tenant SaaS, billing, onboarding | |
+| 6 | DPIA, AI Act technical file, model cards, pen test | |
