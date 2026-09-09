@@ -4,5 +4,6 @@ ENV PYTHONPATH=/app/shared
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY services/telemetry_service/main.py /app/
+COPY services/telemetry_service/kafka_consumer.py /app/
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

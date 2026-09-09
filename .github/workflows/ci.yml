@@ -1,26 +1,55 @@
-# CI: test backend and dashboard, build images. No deploy without approval.
+# CI: backend tests against a real TimescaleDB/PostGIS, dashboard build, image builds.
+# Backend tests gate the build: no --ignore, no continue-on-error.
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, 'phase-*']
   pull_request:
     branches: [main]
+
 jobs:
   backend-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Must match docker-compose: the schema needs PostGIS and TimescaleDB.
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: defense
+          POSTGRES_PASSWORD: defense
+          POSTGRES_DB: defense
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U defense -d defense"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://defense:defense@localhost:5432/defense
+      JWT_SECRET: ci_secret_that_is_at_least_32_characters_long
+      JWT_ISSUER: defense-api
+      JWT_AUDIENCE: defense-dashboard
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
       - name: Install deps
         run: |
-          cd backend && pip install -r requirements.txt
+          cd backend
+          pip install -r requirements.txt
           pip install -e ./shared
-      - name: Unit tests
+      - name: Apply schema
         run: |
-          cd backend && python -m pytest tests/ -v --ignore=tests/test_asset_service.py --ignore=tests/test_control_service.py
-        continue-on-error: true
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+          for f in backend/db/schema/*.sql; do
+            echo "applying $f"
+            PGPASSWORD=defense psql -h localhost -U defense -d defense -v ON_ERROR_STOP=1 -f "$f"
+          done
+      - name: Unit tests
+        run: cd backend && PYTHONPATH=shared python -m pytest tests/ -v
+
   dashboard-build:
     runs-on: ubuntu-latest
     steps:
@@ -28,17 +57,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: dashboard/package-lock.json
-      - name: Install and build
-        run: |
-          cd dashboard && npm ci 2>/dev/null || npm install
-          npm run build
+      - name: Install
+        run: cd dashboard && npm install
+      - name: Typecheck
+        run: cd dashboard && npm run typecheck
+      - name: Build
+        run: cd dashboard && npm run build
+
   docker-build:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-test]
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        service:
+          - api_gateway
+          - auth_service
+          - asset_service
+          - telemetry_service
+          - alert_service
+          - control_service
+          - mission_service
+          - drone_bridge
+          - inference_service
+          - ml_service
+          - detections_service
+          - simulation_service
     steps:
       - uses: actions/checkout@v4
-      - name: Build API gateway image
+      - name: Build ${{ matrix.service }}
         run: |
-          cd backend && docker build -f services/api_gateway/Dockerfile -t defense/api-gateway:latest .
+          cd backend
+          docker build -f services/${{ matrix.service }}/Dockerfile \
+            -t dis/${{ matrix.service }}:${{ github.sha }} .

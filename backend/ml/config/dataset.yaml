@@ -1,0 +1,39 @@
+# Dataset shape for training and evaluation.
+#
+# The frozen benchmark split lives OUTSIDE this file. `train_root`/`val_root`
+# are what the frozen manifest's train_root/benchmark_root point at. Training
+# consumes only `train_root`; the benchmark is never used for training and the
+# quarantine is enforced structurally by data_versioning.freeze_benchmark.
+#
+# VisDrone-DET raw categories were cleaned by ml/prepare.py:
+#   - category 0 "ignored regions" dropped (an ignore directive, not a class)
+#   - category 11 "other" dropped (too uninformative to be a product alarm)
+#   - categories 1..10 remapped to 0..9 below
+# Published AISKYEYE class distribution on the frozen val split (ground truths)
+# is preserved in `data/visdrone-yolo/report.json` (e.g. car 14064 vs bus 251).
+#
+# This file is ultralytics-valid so it can back `model.train(data=...)`.
+path: data/visdrone-yolo
+train: train
+val: val
+names:
+  0: pedestrian
+  1: people
+  2: bicycle
+  3: car
+  4: van
+  5: truck
+  6: tricycle
+  7: awning-tricycle
+  8: bus
+  9: motor
+
+# Absolute roots (overridden by callers; kept as a pointer for tooling).
+train_root: data/visdrone-yolo/train
+val_root: data/visdrone-yolo/val
+
+project: runs
+seed: 42
+imgsz: 640
+epochs: 100
+batch: 16

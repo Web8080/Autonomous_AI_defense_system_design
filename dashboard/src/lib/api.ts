@@ -1,28 +1,43 @@
 /**
- * API client for defense backend. All requests use API_URL from env.
- * Auth: Bearer token from session/localStorage (set after login).
+ * API client. Attaches the access token, and on a 401 attempts one silent
+ * refresh before surfacing the error, so a 15-minute access TTL is invisible
+ * to the operator mid-shift.
  */
+
+import { getAccessToken, refreshSession, clearSession } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("defense_token");
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {
+async function request<T>(path: string, options: RequestInit, retry: boolean): Promise<T> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string> | undefined),
   };
-  if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
-  if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+
+  if (res.status === 401 && retry) {
+    if (await refreshSession()) return request<T>(path, options, false);
+    clearSession();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError("Session expired", 401);
+  }
+  if (!res.ok) {
+    throw new ApiError(await res.text().catch(() => res.statusText), res.status);
+  }
   return res.json() as Promise<T>;
+}
+
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return request<T>(path, options, true);
 }
 
 export async function listAssets(params?: { region_id?: string; status?: string }) {
@@ -109,3 +124,72 @@ export type Alert = {
   created_at: string;
   updated_at: string;
 };
+
+export type SimulationLayers = {
+  "1": { name: string; scenario: string; available: boolean; sequences: string[]; frames_hint?: number };
+  "2": { name: string; scenarios: string[] };
+  "3": { name: string; scenario: string };
+};
+
+export type SimulationExerciseSummary = {
+  id: string;
+  layer: number;
+  scenario: string;
+  state: string;
+  fps: number;
+  frame_index: number;
+  frames_total: number | null;
+  alerts_candidates: number;
+  precision: number;
+  recall: number;
+};
+
+export type SimulationStatus = {
+  id: string;
+  layer: number;
+  scenario: string;
+  state: string;
+  fps: number;
+  frame_index: number;
+  frames_total: number | null;
+  last_error: string | null;
+  scoreboard: {
+    overall: { gt: number; tp: number; fp: number; fn: number; precision: number; recall: number; f1: number; alert_candidates: number };
+    per_class: Record<string, { gt: number; tp: number; fp: number; fn: number; precision: number; recall: number; f1: number; alert_candidates: number }>;
+  };
+  alerts: { candidates: number; threshold: number };
+  latency_ms: { p50: number | null; p95: number | null; count: number };
+  recent_frames: { frame_id: string; image_b64: string; width: number; height: number; index: number }[];
+  recent_results: {
+    frame_id: string;
+    tp: number;
+    fp: number;
+    fn: number;
+    gt: number;
+    alerts: number;
+    latency_ms: number | null;
+    detections: { class_name: string; confidence: number; bbox: number[]; threat_score: number; model_version: string; matched: boolean }[];
+    gts: { class_name: string; bbox: number[] }[];
+  }[];
+  metrics: { frames_sent: number; frames_scored: number; scoring_drain: number };
+  lessons: { kind: string; class_name?: string; hint: string; [k: string]: unknown }[];
+};
+
+export async function getSimulationLayers() {
+  return api<SimulationLayers>("/api/v1/simulation/layers");
+}
+export async function listSimulationExercises() {
+  return api<SimulationExerciseSummary[]>("/api/v1/simulation/exercises");
+}
+export async function createSimulationExercise(body: { layer: number; scenario?: string; fps?: number; sequence?: string; frames?: number; start_offset?: number }) {
+  return api<SimulationStatus>("/api/v1/simulation/exercises", { method: "POST", body: JSON.stringify(body) });
+}
+export async function getSimulationExercise(id: string) {
+  return api<SimulationStatus>(`/api/v1/simulation/exercises/${id}`);
+}
+export async function stopSimulationExercise(id: string) {
+  return api<{ ok: boolean; id: string }>(`/api/v1/simulation/exercises/${id}/stop`, { method: "POST" });
+}
+export async function ingestSimulationFrame(id: string, body: { image_b64: string; gt: { class_name: string; bbox: number[] }[]; width: number; height: number }) {
+  return api<{ frame_id: string; queue_depth: number }>(`/api/v1/simulation/exercises/${id}/ingest`, { method: "POST", body: JSON.stringify(body) });
+}

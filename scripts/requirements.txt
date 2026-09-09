@@ -1,0 +1,4 @@
+# Dependencies for operational scripts (seed_admin.py and friends).
+# Install into a project venv:  python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements.txt
+asyncpg>=0.29
+argon2-cffi>=23.1

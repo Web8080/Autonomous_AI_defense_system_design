@@ -2,6 +2,7 @@
 Control service: issue commands to assets (emergency stop, override, path plan).
 Logs every command to audit.command_log. MQTT/WebSocket/ROS are placeholders.
 """
+import json
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -9,16 +10,19 @@ from uuid import UUID
 
 from fastapi import FastAPI, Depends, HTTPException
 import asyncpg
+import httpx
 
 from defense_shared.schemas import CommandIntent, CommandRequest
 from defense_shared.safeguardrails import is_allowed_intent, validate_command_payload, validate_asset_id
 from defense_shared.security import sanitize_issued_by
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://defense:defense@localhost:5432/defense")
+DRONE_BRIDGE_URL = os.getenv("DRONE_BRIDGE_URL", "http://drone-bridge:8000")
 MAX_AUDIT_LIMIT = 500
 
 pool: asyncpg.Pool | None = None
 MQTT_BROKER_URL = os.getenv("MQTT_BROKER_URL", "")
+_client: httpx.AsyncClient | None = None
 
 
 async def get_pool() -> asyncpg.Pool:
@@ -30,7 +34,11 @@ async def get_pool() -> asyncpg.Pool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    global _client
+    _client = httpx.AsyncClient(base_url=DRONE_BRIDGE_URL, timeout=10.0)
     yield
+    if _client:
+        await _client.aclose()
     if pool:
         await pool.close()
 
@@ -38,12 +46,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title="Control Service", lifespan=lifespan)
 
 
-def _send_to_asset(asset_id: str, intent: str, payload: dict) -> str:
-    """Placeholder: publish to MQTT or call drone API. Do not use real hardware without credentials."""
-    if not MQTT_BROKER_URL and "PLACEHOLDER" in os.getenv("MQTT_BROKER_URL", ""):
-        return "simulated"
-    # TODO: MQTT publish or HTTP to drone/vehicle adapter
-    return "sent"
+async def _send_to_asset(asset_id: str, intent: str, payload: dict) -> str:
+    """Dispatch a command to the drone bridge (or vehicle adapter).
+
+    Phase 1: drone bridge is the transport for aircraft. Emergency stop and
+    mission abort map directly; other intents are recorded until a handler exists.
+    """
+    if asset_id == "all" or asset_id is None:
+        # Broad stop: drone bridge has no broadcast; leave for GCS-layer handling.
+        return "broadcast-scope-not-supported-by-drone-bridge"
+    if _client is None:
+        return "drone-bridge-unavailable"
+
+    route = f"/vehicles/{asset_id}"
+    try:
+        if intent == CommandIntent.EMERGENCY_STOP.value:
+            r = await _client.post(f"{route}/emergency-stop")
+        elif intent == CommandIntent.MISSION_ABORT.value:
+            r = await _client.post(f"{route}/mission/cancel")
+        elif intent == CommandIntent.OVERRIDE.value:
+            r = await _client.post(f"{route}/rtl")
+        else:
+            return "queued-local"
+
+        if r.status_code == 200:
+            return f"delivered:{intent}"
+        return f"refused:{r.status_code}:{r.text[:120]}"
+    except Exception as exc:
+        return f"error:{exc}"
 
 
 @app.get("/health")
@@ -65,7 +95,7 @@ async def emergency_stop(
         asset_id = str(asset_id).strip()
         if not validate_asset_id(asset_id):
             raise HTTPException(status_code=400, detail="Invalid asset_id")
-    result = _send_to_asset(asset_id, CommandIntent.EMERGENCY_STOP.value, {"scope": asset_id})
+    result = await _send_to_asset(asset_id, CommandIntent.EMERGENCY_STOP.value, {"scope": asset_id})
     await db.execute(
         """
         INSERT INTO audit.command_log (asset_id, intent, issued_by, is_override, payload, result)
@@ -75,7 +105,7 @@ async def emergency_stop(
         CommandIntent.EMERGENCY_STOP.value,
         issued_by,
         True,
-        {"scope": asset_id},
+        json.dumps({"scope": asset_id}),
         result,
     )
     return {"ok": True, "scope": asset_id, "result": result}
@@ -99,7 +129,7 @@ async def send_command(
         asset_uuid = UUID(body.asset_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid asset_id")
-    result = _send_to_asset(body.asset_id, body.intent.value, body.payload)
+    result = await _send_to_asset(body.asset_id, body.intent.value, body.payload)
     await db.execute(
         """
         INSERT INTO audit.command_log (asset_id, intent, issued_by, is_override, payload, result)
@@ -109,7 +139,7 @@ async def send_command(
         body.intent.value,
         issued_by,
         body.is_override,
-        body.payload,
+        json.dumps(body.payload),
         result,
     )
     return {"ok": True, "asset_id": body.asset_id, "intent": body.intent.value, "result": result}
@@ -141,7 +171,7 @@ async def list_audit(
             "intent": r["intent"],
             "issued_by": r["issued_by"],
             "is_override": r["is_override"],
-            "payload": r["payload"],
+            "payload": json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"],
             "result": r["result"],
             "created_at": r["created_at"].isoformat(),
         }
