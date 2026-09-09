@@ -153,3 +153,36 @@ async def test_unknown_role_is_forbidden():
     async with client() as c:
         r = await c.get("/api/v1/assets", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_upstream_down_returns_502_not_500():
+    """A downstream service being unreachable must surface as 502.
+
+    It previously escaped as an unhandled 500 with no CORS headers, so the
+    dashboard could only report 'Failed to fetch' with no usable status.
+    """
+    import sys
+
+    # SERVICE_URLS is built from env at import time, so patch the dict itself.
+    gateway = sys.modules["_svc_api_gateway"]
+    original = gateway.SERVICE_URLS["asset"]
+    gateway.SERVICE_URLS["asset"] = "http://127.0.0.1:9"  # discard port, refuses
+    try:
+        token = make_token()
+        transport = ASGITransport(app=app, raise_app_exceptions=False)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            r = await c.get("/api/v1/assets", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 502
+    finally:
+        gateway.SERVICE_URLS["asset"] = original
+
+
+@pytest.mark.asyncio
+async def test_error_responses_carry_cors_headers():
+    """CORS must be the outermost middleware, or the browser sees an opaque
+    failure instead of the real status on 401s and 502s."""
+    async with client() as c:
+        r = await c.get("/api/v1/assets", headers={"Origin": "http://localhost:3000"})
+    assert r.status_code == 401
+    assert r.headers.get("access-control-allow-origin") == "http://localhost:3000"

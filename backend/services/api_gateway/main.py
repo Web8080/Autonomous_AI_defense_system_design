@@ -8,6 +8,7 @@ from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import httpx
 
@@ -75,9 +76,40 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title="Defense API Gateway", lifespan=lifespan)
 
 origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["GET", "POST", "PATCH", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
-app.add_middleware(RateLimitMiddleware)
+# Order matters: add_middleware prepends, so the last one added is the outermost.
+# CORS is added last so that rate-limit 429s and upstream-failure 502s still
+# carry Access-Control-Allow-Origin. Without this the browser surfaces an opaque
+# CORS error and the real status code is invisible to the operator.
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
+
+
+@app.exception_handler(httpx.TimeoutException)
+async def _upstream_timeout(request: Request, exc: httpx.TimeoutException) -> JSONResponse:
+    return JSONResponse(status_code=504, content={"detail": "Upstream service timed out"})
+
+
+@app.exception_handler(httpx.RequestError)
+async def _upstream_unreachable(request: Request, exc: httpx.RequestError) -> JSONResponse:
+    """A downstream service is down. Previously this escaped as an unhandled 500
+    with no CORS headers, so the dashboard could only report 'Failed to fetch'."""
+    return JSONResponse(status_code=502, content={"detail": "Upstream service unavailable"})
+
+
+@app.exception_handler(httpx.HTTPStatusError)
+async def _upstream_status(request: Request, exc: httpx.HTTPStatusError) -> JSONResponse:
+    status = exc.response.status_code
+    return JSONResponse(
+        status_code=status if 400 <= status < 600 else 502,
+        content={"detail": "Upstream service error"},
+    )
 
 
 @app.get("/health")
