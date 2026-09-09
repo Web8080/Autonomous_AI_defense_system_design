@@ -6,7 +6,7 @@
 
 Drones fly scheduled or operator-triggered missions. Onboard computer vision detects intrusions, trespass, vegetation encroachment and equipment faults. Operators get a live map, live video, an alert queue and a full audit trail. **Every dispatch is approved by a human before the aircraft arms.**
 
-> **Live now:** Two-stage VisDrone fine-tune in progress (`21/35` stage-2, mAP@50 0.272 → 0.30 gate), CV Simulation Lab with 3 layers streaming through the real pipeline, 100/100 tests passing. See [Roadmap](#roadmap) and [Design Notes](#design-notes).
+> **Live now:** Two-stage VisDrone fine-tune **done** `35/35` (`mAP@50 0.296`, `P 0.417 R 0.315`, `FAPFH 1.989`, `latency 14.9ms`) — gate `0.30` just missed by `0.014`, CV Simulation Lab with 3 layers streaming through the real pipeline, 100/100 tests passing. See [Roadmap](#roadmap), [Design Notes](#design-notes) and [Training Results](#training-results--evaluation).
 
 ---
 
@@ -15,12 +15,13 @@ Drones fly scheduled or operator-triggered missions. Onboard computer vision det
 - [Product boundary](#product-boundary)
 - [Architecture](#architecture)
 - [How Everything Connects — Wireflows](#how-everything-connects--wireflows)
-- [Tech Stack — Full Stack · Backend · ML · Data Science · AI · Security](#tech-stack)
+- [Tech Stack — Full Stack · Backend · ML · AI · Security](#tech-stack)
 - [Simulation Lab — 3 Layers Live on the Real Pipeline](#simulation-lab--3-layers-live-on-the-real-pipeline)
-- [ML & Data Science Pipeline](#ml--data-science-pipeline)
+- [ML Pipeline](#ml-pipeline)
 - [Security & AI Safeguards](#security--ai-safeguards)
 - [Setup](#setup)
 - [Testing & Health](#testing--health)
+- [Training Results & Evaluation](#training-results--evaluation)
 - [Deployment — Microsoft Azure](#deployment--microsoft-azure)
 - [Roadmap](#roadmap)
 - [Design Notes](#design-notes)
@@ -113,7 +114,7 @@ Full C4: [`docs/architecture/C4-CONTEXT.md`](docs/architecture/C4-CONTEXT.md) ·
 | **Full Stack** | Next.js 16.3.4 / React 19, MapLibre GL + react-map-gl, three.js 0.160 (L3), Zustand + TanStack Query, Recharts, Tailwind, FastAPI + Pydantic, httpx, uvicorn, Docker Compose + Kubernetes (Helm, Terraform placeholder) | SSR dashboard with live map + 3D, Python API with async proxy, infra as code |
 | **Backend** | Python 3.11/3.13, FastAPI per service, PostgreSQL 16 + TimescaleDB + PostGIS, Redis, Redpanda (Kafka API), asyncpg, pytest + pytest-asyncio, Docker (11 services) | Time-series telemetry (hypertables), geospatial zones, at-least-once events, stateless scale |
 | **ML** | PyTorch 2.14, Ultralytics 8.4 (YOLOv8n), ONNX → TensorRT (Phase 4, FP16/INT8, per-device engine), `MODEL_PATH` + registry sync, provenance stamping | Edge inference SLO: camera→alert <1.5 s, detection→row <250 ms, ≥20 fps @1280 FP16 / ≥30 fps INT8 on Orin |
-| **Data Science** | VisDrone-DET, PIL/numpy, `prepare.py` (bounds clamp, class report), `build_corpus.py` (pseudo-flights), `data_versioning.py` (content hash + stem-overlap quarantine), `eval.py` (mAP, per-class recall, FAPFH sweep @FAR≤2/hr, latency p95) | Evidence, not vibes — every number is measured against the frozen benchmark + temporal corpus |
+| **Datasets & Evaluation** | VisDrone-DET, PIL/numpy, `prepare.py` (bounds clamp, class report), `build_corpus.py` (pseudo-flights), `data_versioning.py` (content hash + stem-overlap quarantine), `eval.py` (mAP, per-class recall, FAPFH sweep @FAR≤2/hr, latency p95) | Evidence, not vibes — every number is measured against the frozen benchmark + temporal corpus |
 | **AI (product)** | YOLO detection (learned) + **deterministic** ByteTrack (tracking) + PostGIS containment (zones) + alert coalescing; future: drift (F1/FAR/latency), active-learning loop (`review_state`) | Tracking/zones are explainable: an operator and regulator can be told exactly why an alert fired |
 | **Security** | JWT HS256 (15m) + rotating revocable refresh (hashed), RBAC (super_admin/local_operator), site scoping from signed claims, rate-limit + security headers + audit log, OWASP Top 10, AI safeguardrails (intent allowlist, depth/size caps, SSRF allowlist, inference caps) | Zero-trust at the gateway: every route verifies, every dispatch is audited. See below. |
 
@@ -133,14 +134,101 @@ The gap: `sensor_emulator.py` was a red square, `scenario_runner.py` was 2D coor
 
 ---
 
-## ML & Data Science Pipeline
+## ML Pipeline
 
 * **Dataset decision:** VisDrone-DET — drone-captured, dense, tiny objects (5–40 px), matching the patrol envelope better than COCO. Raw 12 classes → effective 10 (pedestrian, people, bicycle, car, van, truck, tricycle, awning-tricycle, bus, motor) after dropping `ignored regions` + `other`. Pinned in `backend/ml/config/dataset.yaml`.
 * **Feature engineering that matters:** two-stage transfer (freeze backbone 0–9 → head learns aerial scale, then low-LR full tune; BN re-adaptation), honest label math (clamp + drop zero-area, report car 14k vs bus 251 val → tiered gate floor), temporal product metric (FAPFH @5 fps, not mAP).
 * **Quarantine:** `freeze_benchmark` refuses on stem overlap (renames don't hide leaks), `train.py` re-checks, `manifests/frozen-visdrone.json` carries `dataset_hash` `66948…`, `benchmark_hash` `cc9ae5…`, `source_hashes` + `benchmark_name` `visdrone-detect-frozen-2026-09`.
-* **Training:** `.venv-ml` (Python 3.13, torch 2.14 MPS, ultralytics 8.4). Stage 1 `15e freeze10 lr0 0.02` → **mAP@50 0.202** / P 0.313 R 0.24 ; Stage 2 `35e freeze0 lr0 0.002` → **21/35 mAP@50 0.272** (see `data/train-s2.log`, `runs/detect/runs/visdrone-s2/`) climbing to the calibrated gate **0.30** (literature YOLOv8n 0.28–0.32) with per-class floor 0.60 common / 0.40 rare (`gt_count<1500`). `deterministic=False` on MPS, seed 42.
+* **Training:** `.venv-ml` (Python 3.13, torch 2.14 MPS, ultralytics 8.4). Stage 1 `15e freeze10 lr0 0.02` → **mAP@50 0.202** / P 0.313 R 0.24 ; Stage 2 `35e freeze0 lr0 0.002` → **35/35 done 17:07, mAP@50 0.296** / P 0.417 R 0.315 (`data/train-s2.log`, `runs/detect/runs/visdrone-s2/`) vs calibrated gate **0.30** (YOLOv8n literature 0.28–0.32, just -0.004). Per-class floor 0.60 common / 0.40 rare (`gt_count<1500`). `deterministic=False` on MPS, seed 42.
 * **Eval:** `backend/ml/eval.py --manifest manifests/frozen-visdrone.json --weights data/models/visdrone-yolov8n.pt --corpus-manifest data/visdrone-yolo/corpus/corpus.json --device mps` emits `map_50, map_50_95, precision/recall@conf, recall_at_target_far (FAR≤2/hr sweep), false_alarms_per_hour, latency p95, per_class {recall, gt_count, conf}, per_slice`. Without corpus → null → gate `REJECT` (fail-closed). Product metric sweep: confidence thresholds 0.0→1.0 (401 steps), FP = prediction ≥thresh not IoU-matched, greedy same-class IoU≥0.5.
 * **Serving:** `inference_service` resolves `GET /ml/models/production` (single source of truth), stamps every detection, `MAX_IMAGE_B64 10MB`, `MAX_BATCH_FRAMES 20`; TensorRT adapter in Phase 4 (ONNX→engine, per-device, re-certified through the gate — a bad INT8 calibration fails `false_alarms_per_hour` before it flies). SLOs: camera→alert <1.5 s, detection→row <250 ms, ≥20 fps FP16 / ≥30 fps INT8 @1280.
+
+---
+
+## Training Results & Evaluation
+
+*Workflow — from EDA to promotion — with live artefacts from the `35/35` run.*
+
+### 1. Workflow
+
+```
+EDA → prepare.py (12→10 classes, clamp, report) → build_corpus.py (76×5fps pseudo-flights)
+  → freeze_benchmark (stem-overlap quarantine → manifests/frozen-visdrone.json)
+  → train.py (two-stage, MPS, 8 img) → runs/detect/runs/visdrone-s*/results.csv + curves
+  → eval.py (mAP + per-class @0.25 + FAPFH sweep + p95) → /tmp/eval-s2.json
+  → ml-service POST /models → POST /evals (gate computed server-side) → POST /promote (human promoted_by)
+  → inference GET /models/production → live via simulation lab
+```
+
+EDA is the class report from `prepare.py` (`data/visdrone-yolo/report.json`): **car 14,064 vs bus 251 val GT** — the imbalance that forced the tiered per-class floor. Object counts per frame `≈53 train / 71 val`, tiny objects `5–40 px` dominate — hence `imgsz 640` now, `1280/SAHI` next. Every box is clamped, zero-area dropped; `source_hashes` in the manifest records the raw ZIP shas.
+
+### 2. Learning curves — `runs/detect/runs/visdrone-s2/results.png`
+
+![Training curves — box/cls/dfl loss + precision/recall/mAP](docs/images/training/visdrone-s2/results.png)
+
+*Three loss lines (`box`, `cls`, `dfl`) fall from `≈1.7/1.3/0.93` (s1) to `≈1.49/1.02/0.88` (s2 epoch 35) — stage 2 unfrozen head + backbone re-adapt at `lr0 0.002`. Precision rises `0.31→0.41`, recall `0.24→0.31`, `mAP@50` `0.202→0.296` and `mAP@50-95` `0.107→0.163`. `lr` cosine `0.002→2.7e-5`. The CSV (`docs/images/training/visdrone-s2/results.csv`) is the source — plot with `tensorboard --logdir runs` or `pandas`.*
+
+| | Stage 1 (15e freeze10) | Stage 2 (35e full, epoch 35) | Δ |
+|---|---|---|---|
+| `mAP@50` | 0.202 | **0.296** | +0.094 |
+| `mAP@50-95` | 0.107 | 0.163 | +0.056 |
+| `P` | 0.313 | 0.417 | +0.104 |
+| `R` | 0.240 | 0.315 | +0.075 |
+| `val box_loss` | 1.70 | 1.51 | -0.19 |
+
+### 3. Precision / Recall / F1 vs confidence — `BoxP/R/F1`
+
+| | |
+|---|---|
+| ![Precision vs confidence](docs/images/training/visdrone-s2/BoxP_curve.png) | ![Recall vs confidence](docs/images/training/visdrone-s2/BoxR_curve.png) |
+| ![F1 vs confidence](docs/images/training/visdrone-s2/BoxF1_curve.png) | ![PR curve](docs/images/training/visdrone-s2/BoxPR_curve.png) |
+
+*These are operating-point tools, not vanity: `P` climbs to ~0.9 at `conf≈0.8` but `R` collapses — the product metric picks the threshold where `FAPFH ≤2/hr`, not the F1 peak. The `PR_curve` area is the `0.296` mAP; the flat `bus`/`car` elbows vs steep `bicycle`/`awning` elbows already flag rare-class trouble (see §5).*
+
+### 4. Confusion matrices — where the model confuses
+
+| Normalized (row = GT, col = pred) | Raw counts |
+|---|---|
+| ![Confusion normalized](docs/images/training/visdrone-s2/confusion_matrix_normalized.png) | ![Confusion](docs/images/training/visdrone-s2/confusion_matrix.png) |
+
+*Strong diagonal for `car` (0.70), `bus` (0.35), `pedestrian` (0.27); heavy off-diagonal `people↔pedestrian` (VisDrone annotators split crowds vs individuals — label noise to call out), `bicycle` heavily confused with `background` (missed), `awning-tricycle` with `tricycle`. That confusion is the treemap the next data slice must attack — exactly what the synthetic L2 engine is built to synthesize.*
+
+### 5. Full frozen-benchmark evaluation — `/tmp/eval-s2.json` (MPS, `20` latency iters, `401`-step FAPFH sweep)
+
+```json
+{
+  "benchmark": "visdrone-detect-frozen-2026-09",
+  "benchmark_hash": "cc9ae53…",
+  "map_50": 0.2856, "map_50_95": 0.159, "precision_at_conf": 0.416, "recall_at_conf": 0.314,
+  "false_alarms_per_hour": 1.989, "recall_at_target_far": 0.2301, "latency_p95_ms": 14.93, "device": "mps"
+}
+```
+
+Per-class `@conf=0.25` (the gate's `gt_count` tier):
+
+| Class | GT | Recall | vs floor | Verdict |
+|-------|-----|--------|----------|---------|
+| **car** | 14,064 | **0.694** | 0.60 (common) | ✅ |
+| **bus** | 251 | 0.346 | 0.40 (rare) | ❌ -0.05 |
+| **pedestrian** | 8,844 | 0.269 | 0.60 | ❌ |
+| **people** | 5,125 | 0.167 | 0.60 | ❌ |
+| **van** | 1,975 | 0.262 | 0.60 | ❌ |
+| **motor** | 4,886 | 0.258 | 0.60 | ❌ |
+| **truck** | 750 | 0.228 | 0.40 | ❌ |
+| **bicycle** | 1,287 | 0.044 | 0.40 | ❌ |
+| **tricycle** | 1,045 | 0.152 | 0.40 | ❌ |
+| **awning-tricycle** | 532 | 0.088 | 0.40 | ❌ |
+
+*Gate (9 criteria, fail-closed in `eval_gate.py`): `benchmark_hash==visdrone-detect-frozen-2026-09` ✅, `benchmark_hash present` ✅, `map_50 0.285 <0.30` ❌ (by 0.014), `recall@conf 0.314 <0.70` ❌, `recall@target_FAR 0.23 <0.80` ❌, `FAPFH 1.989 ≤2.0 && >0` ✅ (just under), `latency 14.9 ≤150` ✅, *every claimed class ≥ floor* ❌. **Result: `passed_gate=false` — promotion `403` until the product metric is met.** This is the correct behaviour: mAP alone would have hidden the `0.23` recall at the site's alert budget.*
+
+### 6. Analysis — what to do next
+
+1. **Close the `0.285→0.30` mAP gap + the `FAPFH` recall gap** — not by threshold tuning (FAPFH is already `1.989` at `recall 0.23`; higher threshold only lowers FAR and recall together). The lever is **small-object recall**: `imgsz 1280` on the Orin (TensorRT) or SAHI sliced inference (`per_slice` is reserved in `eval.py`), as documented in `docs/phase2 §6`.
+2. **Attack rare-class imbalance** (`bicycle 0.044, awning 0.088`): class-weighted loss → oversample rare sequences (bus 251 vs car 14k) → **L2 synthetic engine** (already in `simulation_service/frames_l2.py`) generating `bus/truck/awning` at will, plus night `brightness/noise` transform (VisDrone is daytime, site is night — declared unvalidated until a night corpus is captured via `detections.detections`).
+3. **Calibrate confidence** — YOLO `conf` ≠ probability. Run temperature/Platt on the frozen val split, map `conf→measured FAR` per class, then replace the single `0.7` alert threshold with per-class operating points from the FAPFH sweep.
+4. **Active learning loop** (`review_state`/`corrected_class` columns already in `detections.detections`) — operator corrections in the CV Lab become the next dataset slice; re-freeze, re-train, re-gate.
+
+> All artefacts are reproducible: `git_sha f7b16e2`, `dataset_hash a3f189…` (train content), `benchmark_hash cc9ae53…`, `artifact_sha 23419d5…`, seed `42`, `.venv-ml` pins (`torch 2.14, ultralytics 8.4.144, MPS`). Raw `data/` and `*.pt` stay gitignored (VisDrone research-only); `manifests/` is the auditable record, `docs/images/training/` is the publishable proof.
 
 ---
 
@@ -286,7 +374,7 @@ See: [`infra/helm/defense/values.yaml`](infra/helm/defense/values.yaml) · [`inf
 |-------|-------|--------|--------------|
 | 0 | Tenancy schema, real auth, TimescaleDB/PostGIS, Redpanda | **Done** | [Functional](docs/phase0/01-functional-requirements.md) · [NFR](docs/phase0/02-non-functional-requirements.md) · [Arch Exploration](docs/phase0/03-architectural-exploration.md) · [System Arch](docs/phase0/04-system-architecture.md) · [Module Deps](docs/phase0/05-module-dependencies.md) · [Env & Secrets](docs/phase0/06-environment-and-secrets.md) · [AI Flows](docs/phase0/07-ai-decision-flows.md) |
 | 1 | Drone Bridge (MAVSDK), mission + flight API, PX4 SITL, dispatch with human approval gate | **Done** — 56 tests, `VehicleLink`/`MAVLinkBridge`/`safety.py`, SITL `x500` | [Phase 1](docs/phase1/01-phase1-design-notes.md) |
-| 2 | VisDrone training pipeline, evaluation gate, model registry — dataset + corpus + two-stage fine-tune, gate + promotion | **In progress** — stage1 done (mAP@50 0.202), stage2 `21/35` (≈0.272 → 0.30 gate), corpus 76×5fps, registry live | [Phase 2](docs/phase2/01-phase2-design-notes.md) |
+| 2 | VisDrone training pipeline, evaluation gate, model registry — dataset + corpus + two-stage fine-tune, gate + promotion | **Done 35/35** — stage1 `mAP@50 0.202`, stage2 `mAP@50 0.296 P 0.417 R 0.315 FAPFH 1.989 latency 14.9ms` (gate `0.30` missed by `0.014`, per-class + FAPFH recall fail-closed) | [Phase 2](docs/phase2/01-phase2-design-notes.md) |
 | 3 | Dashboard rebuild: map, live video, mission planner, triage + CV Simulation Lab (L1/L2/L3) on the real pipeline | **Done (CV Lab)** — L1 replay, L2 synthetic, L3 browser 3D ingest via `simulation_service`; lessons → product; legacy agent replay preserved | [Phase 3](docs/phase3/01-phase3-design-notes.md) · [Testing & Sim](docs/Testing-Simulation.md) · [Scenario Vis](docs/Scenario-Visual-Simulation.md) · [Watch Sim](docs/Watch-Simulation.md) |
 | 4 | TensorRT edge deployment, Jetson Orin, real airframe — serving SLOs, INT8 re-certification, Isaac Sim digital twin | **In progress (design + harness)** — SLOs camera→alert <1.5s / detection→row <250ms / ≥20 fps @1280; L1/L2 unblock validation | [Phase 4](docs/phase4/01-inference-serving-and-cv-simulation-design.md) |
 | 5 | Multi-tenant SaaS, billing, onboarding | — | [Phase 5](docs/phase5/01-phase5-design-notes.md) — Phase 4 harness + sizing inform per-tenant isolation |
@@ -326,7 +414,7 @@ Phase 3 (dashboard + CV Lab) and Phase 5 (multi-tenancy) each have dedicated des
 
 Tracked honestly, because the repo previously overstated its own completeness.
 
-- **VisDrone model — training in progress.** Stage 1 (freeze backbone, 15 epochs, lr 0.02) finished: mAP@50 0.202 on the frozen 548-image benchmark (38,759 instances). Stage 2 (unfrozen, 35 epochs, lr 0.002) is at epoch 21/35, mAP@50 ≈0.272 and climbing toward the 0.30 gate — see `data/train-s2.log` and `runs/detect/runs/visdrone-s2/`. The model registry, evaluation gate and benchmark quarantine (`manifests/frozen-visdrone.json`, temporal corpus `data/visdrone-yolo/corpus/corpus.json` — 76 pseudo-flights, 5 fps) are live. Until promotion, inference still returns `stub` detections (threat 0.0, never an alert) or `unregistered` if a checkpoint is loaded without a registry entry. (Phase 2 — see `docs/phase2/01-phase2-design-notes.md` §§6–8 for CV-smartness, alert gap and 14 failure modes.)
+- **VisDrone model — 35/35 done 17:07** (`mAP@50 0.296 P 0.417 R 0.315 FAPFH 1.989 latency 14.9ms` vs gate `0.30` → missed by `0.014`; per-class rec 8/10 fail, `recall@FAR 0.23 <0.80` fail-closed). Stage 1 `15e freeze10` `mAP@50 0.202`; Stage 2 `35e` full `0.296` — see `docs/images/training/visdrone-s2/` (curves, PR, confusion) and `/tmp/eval-s2.json`. Artifact `data/models/visdrone-yolov8n.pt` `sha 23419d5…` quarantined (`manifests/frozen-visdrone.json` `cc9ae53…`). Until promotion passes, inference `stub`/`unregistered` as before. (Phase 2 §§6–8)
 - Evaluation harness + promotion gate: implemented and operational. The gate fails closed on any missing product metric, and FAPFH/recall-at-target-FAR are only measurable against the temporal flight corpus — `backend/ml/eval.py` sweeps confidence over the corpus to pick the operating point at FAR ≤2/hr. The gate is now calibrated to VisDrone literature (mAP 0.30, tiered per-class floor by `gt_count`) and records `gt_count` per class in the eval.
 - **Simulation lab — live on the real pipeline.** `simulation_service` (L1 real-footage replay, L2 synthetic compose, L3 browser 3D ingest) publishes to the same `inference.frames` Kafka topic a physical camera does, so the trained model, detection persistence and alert service treat the feed as production. The dashboard Simulation page now has a **CV Lab** with a layer selector (1/2/3) — video with GT (dashed blue) vs detection (green TP / red FP) overlay, live scoreboard (precision/recall/F1, TP/FP/FN, per-class, p50/p95 latency) and **lessons → product** (FP bias → tighten threshold/zone, recall gap → grow data). The legacy 2D agent replay viewer remains under the *Agent Replay* tab. (Phase 3/4 — see `docs/phase4/01-inference-serving-and-cv-simulation-design.md` and `backend/services/simulation_service/`.)
 - Dashboard otherwise functional: map (MapLibre), assets, alerts, control, admin, simulation. Helm templates are minimal and Terraform is placeholder. Compose is the supported deployment today.
