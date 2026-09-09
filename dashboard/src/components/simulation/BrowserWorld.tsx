@@ -114,7 +114,16 @@ export default function BrowserWorld({
     // Filmic tonemapping is most of the difference between "3D render" and
     // "camera footage"; without it bright sky clips to flat white.
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = isDaylight(spec.environment.timeOfDay) ? 0.62 : 1.5;
+    // ACES compresses highlights hard, so exposure has to be pushed above 1 in
+    // daylight or a midday scene renders as dusk. Overcast scatters light and
+    // needs less; night relies on streetlights and needs much more.
+    renderer.toneMappingExposure = (() => {
+      const e = spec.environment;
+      if (!isDaylight(e.timeOfDay)) return 2.2;
+      if (e.weather === "overcast" || e.weather === "rain") return 1.15;
+      if (e.weather === "fog") return 1.35;
+      return 1.45;
+    })();
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const built = buildScene(spec);
