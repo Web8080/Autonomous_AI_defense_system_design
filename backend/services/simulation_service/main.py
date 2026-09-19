@@ -25,6 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from engine import Exercise, ExerciseManager, FrameRec
+from environments import list_demo_environments
 from frames_l1 import (
     CorpusSource,
     VideoSource,
@@ -148,6 +149,7 @@ def layers() -> dict:
         except Exception:
             seqs = []
     videos = list_videos()
+    environments = list_demo_environments()
     return {
         "1": {
             "name": "real aerial footage (corpus + MP4)",
@@ -155,6 +157,7 @@ def layers() -> dict:
             "available": available or bool(videos),
             "sequences": seqs,
             "videos": videos,
+            "environments": environments,
             "frames_hint": 548,
         },
         "2": {"name": "procedural aerial compose", "scenarios": sorted(SCENARIOS)},

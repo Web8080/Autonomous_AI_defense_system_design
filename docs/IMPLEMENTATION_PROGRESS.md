@@ -10,18 +10,24 @@ Author: Victor.I
 
 | Item | State |
 |------|--------|
-| Date | 2026-09-19 (turn: localhost restored) |
-| Stack | UP — dashboard `:3000`, inference `:8005` (YOLOv8s loaded), simulation `:8014`, gateway `:8100` |
-| Cause of refuse | Prior shell-backed `nohup` children died with the agent shell; `.venv` (3.14) lacks cv2 (ml venv 3.13 has it) |
-| Fix | Restart via `start_new_session` on `.venv-ml`; kafka-python in ml venv; L1 `patrol-overhead-60s` exercise completed (50 frames scored) |
-| Model | `data/models/visdrone-yolov8s.pt` — car mAP@50 **0.771**, P **0.74** |
-| Real video | `data/videos/patrol-overhead-60s.mp4` |
-| UI | http://127.0.0.1:3000/dashboard/simulation (API via gateway `:8100`, login required) |
-| GitHub | `Web8080/Autonomous_AI_defense_system_design` — commit+push after each major phase (`359521b` on `main`) |
+| Date | 2026-09-19 (turn: investor video environments) |
+| Stack | Dashboard `:3000`, inference `:8005`, simulation `:8014`, gateway `:8100` |
+| Simulation UX | **3 environments** (Railway / Urban / Perimeter) play real MP4 + live YOLO overlays |
+| Demo videos | Symlinks under `dashboard/public/demo-videos/` |
+| Model | `data/models/visdrone-yolov8s.pt` |
+| UI | http://127.0.0.1:3000/dashboard/simulation |
+| GitHub | `Web8080/Autonomous_AI_defense_system_design` — commit+push after each major phase |
 
 ---
 
 ## Implementation history
+
+### 2026-09-19 — Investor demo: real video environments
+
+- Curated environments API (`environments.py`) + layers.environments
+- Simulation page: environment cards, HTML5 `<video>` stage, Play video + live detection
+- Symlinked MP4s into `dashboard/public/demo-videos/` for browser playback
+- Advanced stills / L2 / L3 folded under optional panel
 
 ### 2026-09-19 — Localhost refused: restore dashboard + sim + inference
 

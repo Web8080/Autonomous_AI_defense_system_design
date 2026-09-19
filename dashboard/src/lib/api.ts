@@ -132,6 +132,15 @@ export type SimulationLayers = {
     available: boolean;
     sequences: string[];
     videos?: { id: string; file: string; path: string; has_gt: boolean }[];
+    environments?: {
+      id: string;
+      title: string;
+      subtitle: string;
+      video_id: string;
+      public_path: string;
+      blurb: string;
+      available: boolean;
+    }[];
     frames_hint?: number;
   };
   "2": { name: string; scenarios: string[] };
