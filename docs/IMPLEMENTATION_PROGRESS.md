@@ -17,6 +17,7 @@ Author: Victor.I
 | Model | `data/models/visdrone-yolov8s.pt` — car mAP@50 **0.771**, P **0.74** |
 | Real video | `data/videos/patrol-overhead-60s.mp4` |
 | UI | http://127.0.0.1:3000/dashboard/simulation (API via gateway `:8100`, login required) |
+| GitHub | `Web8080/Autonomous_AI_defense_system_design` — commit+push after each major phase (`359521b` on `main`) |
 
 ---
 
