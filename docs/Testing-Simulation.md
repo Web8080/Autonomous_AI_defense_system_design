@@ -1,123 +1,62 @@
 # Testing the Simulation
 
-How to get services up and run the agent and sensor simulators so you can test the pipeline end to end.
+Author: Victor.I
+
+How to run CV Lab (real YOLO path) and the legacy agent replay with live CV.
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Python 3.11+ (for running the simulation scripts on your host, or use the optional simulation container)
-- (Optional) Node 20 for the dashboard
+- Trained weights at `data/models/visdrone-yolov8n.pt` (compose mounts this)
+- Optional MP4s under `data/videos/` — build with `python scripts/build_visdrone_mp4s.py`
 
-## Option A: Full stack + simulation (recommended)
-
-### 1. Start infrastructure and backend
-
-From the repo root:
+## Recommended: CV Lab on the real pipeline
 
 ```bash
-# Load env if you have one (optional)
+# Load env (MODEL_PATH defaults to /models/visdrone-yolov8n.pt in compose)
 [ -f .env ] && set -a && source .env && set +a
 
-# Start Postgres, Redis, Kafka, then all backend services
-docker compose up -d postgres redis zookeeper kafka
-# Wait for Kafka to be ready
-sleep 15
-docker compose up -d asset-service telemetry-service alert-service control-service inference-service api-gateway
-```
-
-Or use the helper script:
-
-```bash
 ./scripts/run_local.sh
+# or: docker compose up -d
+
+# Build site/aerial MP4s from VisDrone sequences (once)
+python3 scripts/build_visdrone_mp4s.py --max-seqs 8
+
+# Dashboard
+cd dashboard && npm run dev
 ```
 
-Wait until all containers are up (`docker compose ps`). Gateway is at http://localhost:8000.
+Open **Simulation → CV Lab**:
 
-### 2. Create an asset (so telemetry has a valid asset_id)
+1. Layer 1 — pick an **MP4** (preferred) or VisDrone still sequence
+2. Start exercise — frames go to `inference.frames` → YOLO → `inference.detections`
+3. Scoreboard + overlays show TP/FP/FN against GT
 
-The simulator uses a random UUID by default. Either create an asset via the API with that ID, or use a fixed ID for the sim:
+Agent Replay tab: Play with **Live CV (YOLO)** checked — map on the left, camera CV on the right (uses `site-railway-0000001.mp4` when present).
+
+## Verify inference is not stubbed
 
 ```bash
-# Optional: create asset with a known ID for the simulator
-curl -s -X POST http://localhost:8000/api/v1/assets \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer dev-token" \
-  -d '{"name":"Sim Drone","asset_type":"drone","region_id":"region-1"}' | jq
+curl -s http://localhost:8005/health
+# expect: "model_loaded": true
 ```
 
-Note: the gateway requires a valid JWT. With `ALLOW_DEV_TOKEN=true` (set in docker-compose for local), use `Authorization: Bearer dev-token`. If you use a real JWT, get one with `JWT_SECRET=your_32_char_secret python scripts/gen_jwt_dev.py`.
+If false, check `data/models/visdrone-yolov8n.pt` exists and compose volume `./data/models:/models:ro`.
 
-### 3. Run the simulation
+## Extended training (simulation consumes better weights)
 
-From the repo root, with Kafka reachable at `localhost:9092`:
+```bash
+./scripts/train_extended.sh
+# then point MODEL_PATH at data/models/visdrone-yolov8n-ext.pt
+```
+
+Promotion through the eval gate is separate — lab can load weights via MODEL_PATH without promote.
+
+## Legacy Option B (old stub scripts)
+
+The older `simulation/agent_simulator.py` + `sensor_emulator.py` path still exists for telemetry smoke tests. Prefer CV Lab + Agent Replay CV for detection work.
 
 ```bash
 export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-cd simulation
-pip install -r requirements.txt
-# Terminal 1: agent (telemetry.raw)
-python agent_simulator.py
-# Terminal 2: sensor (inference.frames)
-python sensor_emulator.py
-```
-
-Or run both in the background and leave them running:
-
-```bash
 ./scripts/run_simulation.sh
 ```
-
-Keep that terminal open (or run in tmux/screen). Stop with Ctrl+C.
-
-### 4. Verify data flow
-
-- **Kafka**: List topics and consume a few messages (from host with Kafka on 9092):
-
-  ```bash
-  docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
-  docker compose exec kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic telemetry.raw --from-beginning --max-messages 3
-  ```
-
-- **Telemetry in DB**: The telemetry service has a Kafka consumer that writes to `telemetry.aggregated`. Run it manually so ingested telemetry is stored:
-
-  ```bash
-  cd backend && PYTHONPATH=shared KAFKA_BOOTSTRAP_SERVERS=localhost:9092 DATABASE_URL=postgresql://defense:defense@localhost:5432/defense python services/telemetry_service/kafka_consumer.py
-  ```
-
-  Then query: `GET http://localhost:8000/api/v1/telemetry/aggregated` with `Authorization: Bearer dev-token`.
-
-- **Dashboard**: From repo root, `cd dashboard && npm install && npm run dev`. Open http://localhost:3000, log in (uses dev-token when API is localhost). Map and assets will show data once the consumer has run and assets exist.
-
-## Option B: Minimal (Kafka + simulation only)
-
-To test only that the simulators publish to Kafka (no backend or DB):
-
-```bash
-docker compose up -d zookeeper kafka
-sleep 15
-export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-cd simulation && pip install -r requirements.txt
-python agent_simulator.py &
-python sensor_emulator.py &
-# Verify
-docker compose exec kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic telemetry.raw --from-beginning --max-messages 5
-```
-
-## Environment variables (simulation)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| KAFKA_BOOTSTRAP_SERVERS | localhost:9092 | Kafka brokers (use host:9092 when Kafka runs in Docker) |
-| TELEMETRY_RAW_TOPIC | telemetry.raw | Topic for agent telemetry |
-| INFERENCE_FRAMES_TOPIC | inference.frames | Topic for sensor frames |
-| SIM_ASSET_ID | random UUID | Asset ID in messages (set to match an asset in DB if you want aggregation) |
-| SIM_REGION_ID | region-1 | Region in payload |
-| SIM_INTERVAL_SEC | 1.0 | Agent publish interval (seconds) |
-| SIM_FRAME_INTERVAL_SEC | 2.0 | Sensor frame publish interval (seconds) |
-
-## Troubleshooting
-
-- **Connection refused to Kafka**: Ensure Kafka is up and exposed on 9092 (`docker compose ps`). From the host use `localhost:9092`; from another container use `kafka:29092`.
-- **401 from API**: Set `ALLOW_DEV_TOKEN=true` on the api-gateway and use `Authorization: Bearer dev-token`, or issue a real JWT with `scripts/gen_jwt_dev.py`.
-- **No telemetry in API**: Run the telemetry Kafka consumer (see step 4 above); the main telemetry service only serves and ingests via HTTP by default.
-- **Simulation script exits**: Run `./scripts/run_simulation.sh` and leave the terminal open, or run `agent_simulator.py` and `sensor_emulator.py` in two separate terminals.

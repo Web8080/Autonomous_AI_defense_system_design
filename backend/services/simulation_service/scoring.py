@@ -17,6 +17,17 @@ from typing import Optional
 IOU_THRESHOLD = 0.5
 ALERT_THRESHOLD = 0.7  # mirrors alert_service threat-score gate
 
+# Lab aliases so older synthetic labels still score against VisDrone names.
+CLASS_ALIASES = {
+    "person": "pedestrian",
+    "vehicle": "car",
+    "vehicles": "car",
+}
+
+
+def normalize_class(name: str) -> str:
+    return CLASS_ALIASES.get((name or "").lower().strip(), (name or "").lower().strip())
+
 
 @dataclass
 class GTBox:
@@ -71,8 +82,9 @@ def match_frame(gts: list[GTBox], dets: list[Det]) -> FrameResult:
     for det in sorted(dets, key=lambda d: d.confidence, reverse=True):
         best_idx: Optional[int] = None
         best_score = IOU_THRESHOLD
+        det_cls = normalize_class(det.class_name)
         for i, gt in enumerate(gts):
-            if i in used or gt.class_name != det.class_name:
+            if i in used or normalize_class(gt.class_name) != det_cls:
                 continue
             score = iou(det.bbox, gt.bbox)
             if score > best_score:

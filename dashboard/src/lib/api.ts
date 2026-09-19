@@ -126,9 +126,16 @@ export type Alert = {
 };
 
 export type SimulationLayers = {
-  "1": { name: string; scenario: string; available: boolean; sequences: string[]; frames_hint?: number };
+  "1": {
+    name: string;
+    scenario: string;
+    available: boolean;
+    sequences: string[];
+    videos?: { id: string; file: string; path: string; has_gt: boolean }[];
+    frames_hint?: number;
+  };
   "2": { name: string; scenarios: string[] };
-  "3": { name: string; scenario: string };
+  "3": { name: string; scenario: string; note?: string };
 };
 
 export type SimulationExerciseSummary = {
@@ -181,7 +188,16 @@ export async function getSimulationLayers() {
 export async function listSimulationExercises() {
   return api<SimulationExerciseSummary[]>("/api/v1/simulation/exercises");
 }
-export async function createSimulationExercise(body: { layer: number; scenario?: string; fps?: number; sequence?: string; frames?: number; start_offset?: number }) {
+export async function createSimulationExercise(body: {
+  layer: number;
+  scenario?: string;
+  fps?: number;
+  sequence?: string;
+  video?: string;
+  frames?: number;
+  start_offset?: number;
+  agent_replay?: string;
+}) {
   return api<SimulationStatus>("/api/v1/simulation/exercises", { method: "POST", body: JSON.stringify(body) });
 }
 export async function getSimulationExercise(id: string) {

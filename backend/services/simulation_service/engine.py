@@ -337,6 +337,7 @@ class ExerciseManager:
                     "image_b64": b64,
                     "source": f"simulation/l{ex.layer}",
                     "camera": scenario_name(ex.scenario),
+                    "provenance": "sim-synthetic" if ex.layer == 2 else "sim-replay",
                 }
                 ex.record_frame(
                     frame_id, gts, FrameRec(frame_id=frame_id, image_b64=b64, width=w, height=h, index=idx)

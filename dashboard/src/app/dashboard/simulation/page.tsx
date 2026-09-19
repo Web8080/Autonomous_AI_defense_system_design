@@ -14,7 +14,34 @@ import {
 } from "@/lib/api";
 import BrowserWorld from "@/components/simulation/BrowserWorld";
 
-// ---------- legacy agent replay viewer (preserved) ----------
+function FrameOverlay({ frame, result }: { frame: { image_b64: string; width: number; height: number } | null; result: SimulationStatus["recent_results"][number] | null }) {
+  if (!frame) return <div style={{ width: "100%", maxWidth: 640, height: 360, background: "#0d1117", border: "1px solid #30363d", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b949e", fontSize: 13 }}>No frame yet — start an exercise or wait for Kafka.</div>;
+  const gts = result?.gts ?? [];
+  const dets = result?.detections ?? [];
+  return (
+    <div style={{ position: "relative", width: "100%", maxWidth: frame.width, border: "1px solid #30363d", borderRadius: 8, overflow: "hidden", background: "#0d1117" }}>
+      <img src={`data:image/jpeg;base64,${frame.image_b64}`} alt="frame" style={{ display: "block", width: "100%", height: "auto" }} draggable={false} />
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {gts.map((g, i) => {
+          const [x0, y0, x1, y1] = g.bbox;
+          return <div key={`gt-${i}`} title={`GT ${g.class_name}`} style={{ position: "absolute", left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`, border: "1.5px dashed #58a6ff", background: "rgba(88,166,255,0.08)", boxSizing: "border-box" }} />;
+        })}
+        {dets.map((d, i) => {
+          const [x0, y0, x1, y1] = d.bbox;
+          const col = d.matched ? "#3fb950" : "#f85149";
+          const bg = d.matched ? "rgba(63,185,80,0.12)" : "rgba(248,81,73,0.14)";
+          return (
+            <div key={`det-${i}`} style={{ position: "absolute", left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`, border: `1.8px solid ${col}`, background: bg, boxSizing: "border-box" }}>
+              <span style={{ position: "absolute", top: -16, left: 0, fontSize: 10, fontWeight: 600, color: "#e6edf3", background: col, padding: "1px 4px", borderRadius: 3, whiteSpace: "nowrap", lineHeight: "12px" }}>{d.class_name} {d.confidence.toFixed(2)}{d.matched ? " ✓" : ""}</span>
+            </div>
+          );
+        })}
+      </div>
+      {result && <div style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.72)", color: "#e6edf3", fontSize: 11, padding: "3px 6px", borderRadius: 4, lineHeight: 1 }}>TP {result.tp} · FP {result.fp} · FN {result.fn} · GT {result.gt}{result.latency_ms != null ? ` · ${result.latency_ms}ms` : ""}</div>}
+    </div>
+  );
+}
+
 type Asset = { id: string; name: string; asset_type: string; position: number[]; status: string; task?: string };
 type Threat = { position: number[]; type: string };
 type Frame = { t: number; assets: Asset[]; threats_active: Threat[]; decisions?: unknown[] };
@@ -26,6 +53,7 @@ function getTokenLegacy(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("dis_access_token") || localStorage.getItem("defense_token");
 }
+
 function LegacyReplayViewer() {
   const [replay, setReplay] = useState<Replay | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,8 +63,14 @@ function LegacyReplayViewer() {
   const [overlays, setOverlays] = useState({ trails: true, zones: true });
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [selectedReplay, setSelectedReplay] = useState(REPLAYS[0]?.file ?? "railway_line_replay.json");
+  const [cvEnabled, setCvEnabled] = useState(true);
+  const [cvStatus, setCvStatus] = useState<SimulationStatus | null>(null);
+  const [cvId, setCvId] = useState<string | null>(null);
+  const [cvError, setCvError] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trailsRef = useRef<Record<string, number[][]>>({});
+  const cvIdRef = useRef<string | null>(null);
+
   useEffect(() => { loadReplay("railway_line_replay.json"); }, []);
   const loadReplay = useCallback(async (name: string) => {
     setLoading(true); setError("");
@@ -57,11 +91,57 @@ function LegacyReplayViewer() {
       setReplay(data); setCurrentFrameIndex(0); trailsRef.current = {};
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load replay"); setReplay(null); } finally { setLoading(false); }
   }, []);
+
+  const stopCv = useCallback(async () => {
+    const id = cvIdRef.current;
+    if (!id) return;
+    try { await stopSimulationExercise(id); } catch { /* ignore */ }
+    cvIdRef.current = null;
+    setCvId(null);
+  }, []);
+
+  const startCv = useCallback(async () => {
+    if (!cvEnabled) return;
+    setCvError("");
+    try {
+      await stopCv();
+      const s = await createSimulationExercise({
+        layer: 1,
+        fps: 5,
+        frames: 120,
+        agent_replay: selectedReplay,
+      });
+      cvIdRef.current = s.id;
+      setCvId(s.id);
+      setCvStatus(s);
+    } catch (e) {
+      setCvError(e instanceof Error ? e.message : String(e));
+    }
+  }, [cvEnabled, selectedReplay, stopCv]);
+
   useEffect(() => {
     if (!replay || !playing) return;
     const id = setInterval(() => setCurrentFrameIndex((i) => (i + 1 >= replay.frames.length ? 0 : i + 1)), 200);
     return () => clearInterval(id);
   }, [replay, playing]);
+
+  useEffect(() => {
+    if (playing && cvEnabled) void startCv();
+    else if (!playing) void stopCv();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, cvEnabled]);
+
+  useEffect(() => {
+    if (!cvId) return;
+    const id = setInterval(async () => {
+      try {
+        const s = await getSimulationExercise(cvId);
+        setCvStatus(s);
+      } catch { /* ignore */ }
+    }, 900);
+    return () => clearInterval(id);
+  }, [cvId]);
+
   useEffect(() => {
     if (!replay || !canvasRef.current) return;
     const frame = replay.frames[currentFrameIndex]; if (!frame) return;
@@ -125,22 +205,44 @@ function LegacyReplayViewer() {
       ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, h - 32, 200, 26); ctx.fillStyle = "#58a6ff"; ctx.font = "bold 12px system-ui, sans-serif"; ctx.fillText("Follow: " + leadAsset.name, 14, h - 14); ctx.fillStyle = "#8b949e"; ctx.font = "11px system-ui, sans-serif"; ctx.fillText("Track ahead", w / 2 - 28, 24);
     }
   }, [replay, currentFrameIndex, overlays, viewMode]);
+
   const frame = replay?.frames[currentFrameIndex]; const timeSec = frame?.t ?? 0;
+  const cvFrame = cvStatus?.recent_frames?.[0] ?? null;
+  const cvResult = cvFrame ? (cvStatus?.recent_results?.find((r) => r.frame_id === cvFrame.frame_id) ?? cvStatus?.recent_results?.[0] ?? null) : null;
+
   return (
     <div>
       <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
         <label>Replay: <select value={selectedReplay} onChange={(e) => { const f = e.target.value; setSelectedReplay(f); loadReplay(f); }} style={{ minWidth: 180, padding: "0.35rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6 }}><option value="railway_line_replay.json">Railway line</option></select></label>
         <button type="button" onClick={() => loadReplay(selectedReplay)} style={{ padding: "0.4rem 0.8rem" }}>Reload</button>
         <label>View: <select value={viewMode} onChange={(e) => setViewMode(e.target.value as ViewMode)} style={{ minWidth: 120, padding: "0.35rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6 }}><option value="map">Map</option><option value="drone">Drone fly-through</option></select></label>
-        {replay && <><button type="button" onClick={() => setPlaying((p) => !p)}>{playing ? "Pause" : "Play"}</button><label><input type="checkbox" checked={overlays.trails} onChange={(e) => setOverlays((o) => ({ ...o, trails: e.target.checked }))} /> Trails</label><label><input type="checkbox" checked={overlays.zones} onChange={(e) => setOverlays((o) => ({ ...o, zones: e.target.checked }))} /> Zones</label></>}
+        {replay && <><button type="button" onClick={() => setPlaying((p) => !p)}>{playing ? "Pause" : "Play"}</button><label><input type="checkbox" checked={overlays.trails} onChange={(e) => setOverlays((o) => ({ ...o, trails: e.target.checked }))} /> Trails</label><label><input type="checkbox" checked={overlays.zones} onChange={(e) => setOverlays((o) => ({ ...o, zones: e.target.checked }))} /> Zones</label><label><input type="checkbox" checked={cvEnabled} onChange={(e) => setCvEnabled(e.target.checked)} /> Live CV (YOLO)</label></>}
       </div>
       {loading && <p>Loading replay…</p>}
       {error && <p style={{ color: "#f85149" }}>{error}</p>}
+      {cvError && <p style={{ color: "#f85149", fontSize: 13 }}>CV feed: {cvError}. Build MP4s with <code>python scripts/build_visdrone_mp4s.py</code> and ensure inference has MODEL_PATH set.</p>}
       {replay && (
-        <div>
-          <p style={{ marginBottom: "0.5rem", fontSize: 13, color: "#8b949e" }}>{replay.scenario} | Time {timeSec.toFixed(1)}s / {replay.duration_sec}s | Frame {currentFrameIndex + 1} / {replay.frames.length}</p>
-          <input type="range" min={0} max={Math.max(0, replay.frames.length - 1)} value={Math.min(currentFrameIndex, Math.max(0, replay.frames.length - 1))} onChange={(e) => setCurrentFrameIndex(Number(e.target.value))} style={{ width: "100%", maxWidth: 600, marginBottom: "0.5rem" }} />
-          <canvas ref={canvasRef} width={900} height={400} style={{ border: "1px solid #30363d", borderRadius: 8, background: "#0f1419", display: "block", maxWidth: "100%" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "1rem", alignItems: "start" }}>
+          <div>
+            <p style={{ marginBottom: "0.5rem", fontSize: 13, color: "#8b949e" }}>{replay.scenario} | Time {timeSec.toFixed(1)}s / {replay.duration_sec}s | Frame {currentFrameIndex + 1} / {replay.frames.length}</p>
+            <input type="range" min={0} max={Math.max(0, replay.frames.length - 1)} value={Math.min(currentFrameIndex, Math.max(0, replay.frames.length - 1))} onChange={(e) => setCurrentFrameIndex(Number(e.target.value))} style={{ width: "100%", maxWidth: 600, marginBottom: "0.5rem" }} />
+            <canvas ref={canvasRef} width={900} height={400} style={{ border: "1px solid #30363d", borderRadius: 8, background: "#0f1419", display: "block", maxWidth: "100%" }} />
+          </div>
+          <div>
+            <p style={{ marginBottom: "0.5rem", fontSize: 13, color: "#8b949e" }}>
+              Camera CV · {cvStatus ? `${cvStatus.scenario} · ${cvStatus.state}` : "idle"} · Kafka → YOLO
+            </p>
+            {cvEnabled ? (
+              <FrameOverlay frame={cvFrame} result={cvResult} />
+            ) : (
+              <div style={{ padding: "2rem", border: "1px dashed #30363d", borderRadius: 8, color: "#8b949e", fontSize: 13 }}>Enable Live CV to run site MP4 through the trained model.</div>
+            )}
+            {cvStatus && (
+              <p style={{ marginTop: "0.5rem", fontSize: 12, color: "#8b949e" }}>
+                P {cvStatus.scoreboard.overall.precision.toFixed(2)} · R {cvStatus.scoreboard.overall.recall.toFixed(2)} · alerts {cvStatus.alerts.candidates}
+              </p>
+            )}
+          </div>
         </div>
       )}
       {!replay && !loading && <p style={{ fontSize: 13, color: "#8b949e", marginTop: "0.5rem" }}>Copy <code>simulation/replay/railway_line_replay.json</code> to <code>dashboard/public/replay/</code> or set <code>REPLAY_DIR</code> on the gateway.</p>}
@@ -148,36 +250,8 @@ function LegacyReplayViewer() {
   );
 }
 
-// ---------- CV Lab ----------
-function FrameOverlay({ frame, result }: { frame: { image_b64: string; width: number; height: number } | null; result: SimulationStatus["recent_results"][number] | null }) {
-  if (!frame) return <div style={{ width: "100%", maxWidth: 640, height: 360, background: "#0d1117", border: "1px solid #30363d", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b949e", fontSize: 13 }}>No frame yet — start an exercise or wait for Kafka.</div>;
-  const gts = result?.gts ?? [];
-  const dets = result?.detections ?? [];
-  return (
-    <div style={{ position: "relative", width: "100%", maxWidth: frame.width, border: "1px solid #30363d", borderRadius: 8, overflow: "hidden", background: "#0d1117" }}>
-      <img src={`data:image/jpeg;base64,${frame.image_b64}`} alt="frame" style={{ display: "block", width: "100%", height: "auto" }} draggable={false} />
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        {gts.map((g, i) => {
-          const [x0, y0, x1, y1] = g.bbox;
-          return <div key={`gt-${i}`} title={`GT ${g.class_name}`} style={{ position: "absolute", left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`, border: "1.5px dashed #58a6ff", background: "rgba(88,166,255,0.08)", boxSizing: "border-box" }} />;
-        })}
-        {dets.map((d, i) => {
-          const [x0, y0, x1, y1] = d.bbox;
-          const col = d.matched ? "#3fb950" : "#f85149";
-          const bg = d.matched ? "rgba(63,185,80,0.12)" : "rgba(248,81,73,0.14)";
-          return (
-            <div key={`det-${i}`} style={{ position: "absolute", left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`, border: `1.8px solid ${col}`, background: bg, boxSizing: "border-box" }}>
-              <span style={{ position: "absolute", top: -16, left: 0, fontSize: 10, fontWeight: 600, color: "#e6edf3", background: col, padding: "1px 4px", borderRadius: 3, whiteSpace: "nowrap", lineHeight: "12px" }}>{d.class_name} {d.confidence.toFixed(2)}{d.matched ? " ✓" : ""}</span>
-            </div>
-          );
-        })}
-      </div>
-      {result && <div style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.72)", color: "#e6edf3", fontSize: 11, padding: "3px 6px", borderRadius: 4, lineHeight: 1 }}>TP {result.tp} · FP {result.fp} · FN {result.fn} · GT {result.gt}{result.latency_ms != null ? ` · ${result.latency_ms}ms` : ""}</div>}
-    </div>
-  );
-}
-
 function L3Overlay({ gt, detections, width, height }: { gt: { class_name: string; bbox: number[] }[]; detections: SimulationStatus["recent_results"][number]["detections"]; width: number; height: number }) {
+  void width; void height;
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
       {gt.map((g, i) => { const [x0, y0, x1, y1] = g.bbox; return <div key={`gt-${i}`} style={{ position: "absolute", left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`, border: "1.5px dashed #58a6ff", background: "rgba(88,166,255,0.08)", boxSizing: "border-box" }} />; })}
@@ -185,6 +259,7 @@ function L3Overlay({ gt, detections, width, height }: { gt: { class_name: string
     </div>
   );
 }
+
 
 export default function SimulationViewerPage() {
   const [tab, setTab] = useState<"cv" | "legacy">("cv");
@@ -194,6 +269,7 @@ export default function SimulationViewerPage() {
   const [layer, setLayer] = useState<1 | 2 | 3>(1);
   const [scenarioL2, setScenarioL2] = useState("railway-yard");
   const [sequenceL1, setSequenceL1] = useState("");
+  const [videoL1, setVideoL1] = useState("");
   const [fps, setFps] = useState(5);
   const [frames, setFrames] = useState<number>(60);
   const [starting, setStarting] = useState(false);
@@ -241,7 +317,8 @@ export default function SimulationViewerPage() {
     try {
       const body: Record<string, unknown> = { layer, fps };
       if (layer === 1) {
-        if (sequenceL1) body["sequence"] = sequenceL1;
+        if (videoL1) body["video"] = videoL1;
+        else if (sequenceL1) body["sequence"] = sequenceL1;
         body["frames"] = frames;
       } else if (layer === 2) {
         body["scenario"] = scenarioL2;
@@ -254,7 +331,7 @@ export default function SimulationViewerPage() {
       setStatus(s);
       await loadExercises();
     } catch (e) { setCvError(e instanceof Error ? e.message : String(e)); } finally { setStarting(false); }
-  }, [layer, fps, sequenceL1, frames, scenarioL2, loadExercises]);
+  }, [layer, fps, sequenceL1, videoL1, frames, scenarioL2, loadExercises]);
 
   const stopActive = useCallback(async () => {
     if (!activeId) return;
@@ -288,7 +365,7 @@ export default function SimulationViewerPage() {
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Simulation</h1>
       <p style={{ color: "#8b949e", fontSize: 13, marginBottom: "1rem", lineHeight: 1.5 }}>
         <b>CV Lab</b> streams frames through the <em>real product pipeline</em> — <code>inference.frames → trained model → inference.detections → detections store → alerts</code> — and scores live against ground truth.
-        <span style={{ marginLeft: 8, color: "#58a6ff" }}>Layers 1/2/3 exercise the same path a physical camera does; lessons flow back into the product.</span>
+        <span style={{ marginLeft: 8, color: "#58a6ff" }}>Prefer L1 MP4 / VisDrone real footage. L2 is procedural with VisDrone class GT. L3 browser 3D is optional.</span>
       </p>
 
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", borderBottom: "1px solid #21262d", paddingBottom: "0.5rem" }}>
@@ -314,21 +391,24 @@ export default function SimulationViewerPage() {
                 <span style={{ fontSize: 12, fontWeight: 600, color: "#8b949e", textTransform: "uppercase", letterSpacing: 0.4 }}>Layer</span>
                 {[1, 2, 3].map((n) => {
                   const isActive = layer === n;
-                  const label = n === 1 ? "① Real footage (VisDrone corpus)" : n === 2 ? "② Synthetic compose" : "③ 3D world (browser)";
+                  const label = n === 1 ? "① Real footage (MP4 / corpus)" : n === 2 ? "② Procedural aerial" : "③ 3D world (optional)";
                   const avail = n === 1 ? (layers["1"] as unknown as { available: boolean })?.available : true;
                   return (
                     <button key={n} type="button" onClick={() => setLayer(n as 1 | 2 | 3)} disabled={n === 1 && !avail} title={n === 1 && !avail ? "Corpus not available on this host – build it with backend/ml/build_corpus.py" : ""} style={{ padding: "0.5rem 0.75rem", borderRadius: 20, border: `1.5px solid ${isActive ? "#1f6feb" : "#30363d"}`, background: isActive ? "rgba(31,111,235,0.18)" : "#21262d", color: isActive ? "#58a6ff" : "#e6edf3", fontWeight: isActive ? 600 : 400, opacity: n === 1 && !avail ? 0.5 : 1, fontSize: 13 }}>{label}</button>
                   );
                 })}
                 <span style={{ marginLeft: "auto", fontSize: 12, color: "#8b949e" }}>
-                  {layer === 1 ? "Real aerial footage + real GT — zero synthetic risk, exercises the model you trained." : layer === 2 ? "Procedural aerial world — exact GT, tests rare classes & what-ifs before you fly." : "Photoreal 3D world in your browser — FPV frames take the same path as the aircraft."}
+                  {layer === 1 ? "Real aerial MP4 or VisDrone corpus — GT when sidecar present; exercises the trained YOLO model." : layer === 2 ? "Procedural aerial world with VisDrone class names (pedestrian/car/truck/van)." : "Browser 3D FPV — deferred for site fidelity; prefer L1 MP4 for real humans."}
                 </span>
               </div>
             )}
 
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "end" }}>
               {layer === 1 && layers && (
-                <label style={{ fontSize: 12, color: "#8b949e", display: "flex", flexDirection: "column", gap: 4 }}>Sequence (VisDrone)<select value={sequenceL1} onChange={(e) => setSequenceL1(e.target.value)} style={{ minWidth: 200, padding: "0.45rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6 }}><option value="">All sequences (548 frames)</option>{((layers["1"] as unknown as { sequences: string[] })?.sequences ?? []).map((s) => <option key={s} value={s}>{s}</option>)}</select><span style={{ fontSize: 11, color: "#6e7681" }}>Each sequence is a pseudo-flight at 5 fps.</span></label>
+                <>
+                  <label style={{ fontSize: 12, color: "#8b949e", display: "flex", flexDirection: "column", gap: 4 }}>MP4 (site / aerial)<select value={videoL1} onChange={(e) => { setVideoL1(e.target.value); if (e.target.value) setSequenceL1(""); }} style={{ minWidth: 220, padding: "0.45rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6 }}><option value="">— use VisDrone stills —</option>{(layers["1"].videos ?? []).map((v) => <option key={v.id} value={v.id}>{v.file}{v.has_gt ? " · GT" : ""}</option>)}</select><span style={{ fontSize: 11, color: "#6e7681" }}>Built via scripts/build_visdrone_mp4s.py — drop your own site MP4s in data/videos/.</span></label>
+                  <label style={{ fontSize: 12, color: "#8b949e", display: "flex", flexDirection: "column", gap: 4 }}>Sequence (stills)<select value={sequenceL1} onChange={(e) => { setSequenceL1(e.target.value); if (e.target.value) setVideoL1(""); }} disabled={!!videoL1} style={{ minWidth: 200, padding: "0.45rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6, opacity: videoL1 ? 0.5 : 1 }}><option value="">All sequences (548 frames)</option>{(layers["1"].sequences ?? []).map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
+                </>
               )}
               {layer === 2 && layers && (
                 <label style={{ fontSize: 12, color: "#8b949e", display: "flex", flexDirection: "column", gap: 4 }}>Scenario<select value={scenarioL2} onChange={(e) => setScenarioL2(e.target.value)} style={{ minWidth: 200, padding: "0.45rem", background: "#21262d", color: "#e6edf3", border: "1px solid #30363d", borderRadius: 6 }}>{((layers["2"] as unknown as { scenarios: string[] })?.scenarios ?? ["railway-yard", "market-square"]).map((s) => <option key={s} value={s}>{s.replace("-", " ")}</option>)}</select></label>

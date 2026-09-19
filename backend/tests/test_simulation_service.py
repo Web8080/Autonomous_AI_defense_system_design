@@ -92,7 +92,25 @@ class TestL2Synthetic:
                 x0, y0, x1, y1 = gt.bbox
                 assert 0.0 <= x0 < x1 <= 1.0
                 assert 0.0 <= y0 < y1 <= 1.0
-                assert gt.class_name in ("person", "vehicle")
+                assert gt.class_name in ("pedestrian", "car", "truck", "van", "bus")
+
+
+class TestClassAliases:
+    def test_person_matches_pedestrian_det(self):
+        from scoring import normalize_class
+
+        assert normalize_class("person") == "pedestrian"
+        assert normalize_class("vehicle") == "car"
+        res = match_frame(
+            [_gt("pedestrian")],
+            [_det("person", conf=0.9)],
+        )
+        assert len(res.tp) == 1
+        res2 = match_frame(
+            [_gt("car")],
+            [_det("vehicle", conf=0.9)],
+        )
+        assert len(res2.tp) == 1
 
 
 class TestEngine:

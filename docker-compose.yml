@@ -132,12 +132,22 @@ services:
     build: { context: ./backend, dockerfile: services/inference_service/Dockerfile }
     environment:
       <<: *broker-env
-      MODEL_PATH: ${MODEL_PATH:-}
+      # Lab default: load VisDrone fine-tune so simulation is not stubbed.
+      # Production promotion still goes through ml-service eval gate.
+      MODEL_PATH: ${MODEL_PATH:-/models/visdrone-yolov8n.pt}
+      INFERENCE_RUNTIME: ${INFERENCE_RUNTIME:-auto}
       ML_SERVICE_URL: http://ml-service:8000
+    volumes:
+      - ./data/models:/models:ro
     depends_on:
       redpanda: { condition: service_healthy }
       ml-service: { condition: service_started }
     ports: ["8005:8000"]
+
+  billing-service:
+    build: { context: ./backend, dockerfile: services/billing_service/Dockerfile }
+    ports: ["8015:8015"]
+    profiles: ["phase5"]
 
   # Model registry: provenance, evaluation gate, promotion. The registry is the
   # source of truth for WHICH model produced a detection.
@@ -159,16 +169,18 @@ services:
       postgres: { condition: service_healthy }
       redpanda: { condition: service_healthy }
 
-# Simulation lab: drives the real camera-feed path (inference.frames) with
-  # layer-1 real footage, layer-2 synthetic scenes, or layer-3 live 3D ingest.
-  # It exists to validate the production model/pipeline before hardware flights.
+  # Simulation lab: real camera path (L1 footage/MP4, L2 procedural, L3 ingest).
   simulation-service:
     build: { context: ./backend, dockerfile: services/simulation_service/Dockerfile }
     environment:
       <<: *broker-env
-      SIM_CORPUS_MANIFEST: /mnt/corpus/corpus.json
+      SIM_CORPUS_MANIFEST: /mnt/visdrone/corpus/corpus.json
+      SIM_DATA_ROOT: /mnt/visdrone
+      SIM_IMAGE_ROOT: /mnt/visdrone/val/images
+      SIM_VIDEO_DIR: /mnt/videos
     volumes:
-      - ./data/visdrone-yolo/corpus:/mnt/corpus:ro
+      - ./data/visdrone-yolo:/mnt/visdrone:ro
+      - ./data/videos:/mnt/videos:ro
     depends_on:
       redpanda: { condition: service_healthy }
     ports: ["8014:8014"]

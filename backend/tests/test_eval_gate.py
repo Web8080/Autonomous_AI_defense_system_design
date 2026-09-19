@@ -123,3 +123,28 @@ def test_gate_config_is_frozen():
     cfg = GateConfig()
     d = evaluate_gate(passing_record(), cfg)
     assert d.passed
+
+def test_orin_profile_rejects_mps_device():
+    from eval_gate import gate_config_for_profile
+
+    cfg = gate_config_for_profile("orin-trt-int8")
+    r = passing_record(device="mps", latency_p95_ms=40.0)
+    d = evaluate_gate(r, cfg)
+    assert not d.passed
+    assert "device mismatch" in d.detail.lower()
+
+
+def test_orin_profile_accepts_matching_device():
+    from eval_gate import gate_config_for_profile
+
+    cfg = gate_config_for_profile("orin-trt-fp16")
+    r = passing_record(device="orin-trt-fp16", latency_p95_ms=40.0)
+    assert evaluate_gate(r, cfg).passed
+
+
+def test_unknown_profile_raises():
+    from eval_gate import gate_config_for_profile
+    import pytest
+
+    with pytest.raises(KeyError):
+        gate_config_for_profile("not-a-real-profile")

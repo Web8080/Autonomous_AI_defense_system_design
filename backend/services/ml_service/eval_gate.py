@@ -39,6 +39,10 @@ class GateConfig:
     min_recall_at_target_far: float = 0.80
     min_recall_at_conf: float = 0.70
     max_latency_p95_ms: float = 150.0
+    # Device identity: MPS smoke numbers must not certify an Orin SLO.
+    # Empty required_device = any device accepted (legacy / lab).
+    required_device: str = ""
+    profile_name: str = "default"
     # Minimum per-class recall for every class the model claims to detect.
     # A model that detects "car" brilliantly and "person" terribly does not fly.
     # The floor is frequency-tiered because VisDrone is brutally imbalanced
@@ -51,6 +55,40 @@ class GateConfig:
     min_per_class_recall: float = 0.60
     min_per_class_recall_rare: float = 0.40
     rare_class_gt_threshold: int = 1500
+
+
+# Named profiles so Orin certification cannot be satisfied by MacBook MPS smoke.
+DEVICE_PROFILES: dict[str, GateConfig] = {
+    "default": GateConfig(profile_name="default"),
+    "mps-smoke": GateConfig(
+        profile_name="mps-smoke",
+        required_device="mps",
+        max_latency_p95_ms=500.0,  # smoke only; not flight cert
+        min_map_50=0.25,
+    ),
+    "cuda-onnx": GateConfig(
+        profile_name="cuda-onnx",
+        required_device="cuda",
+        max_latency_p95_ms=150.0,
+    ),
+    "orin-trt-fp16": GateConfig(
+        profile_name="orin-trt-fp16",
+        required_device="orin-trt-fp16",
+        max_latency_p95_ms=150.0,
+    ),
+    "orin-trt-int8": GateConfig(
+        profile_name="orin-trt-int8",
+        required_device="orin-trt-int8",
+        max_latency_p95_ms=100.0,
+    ),
+}
+
+
+def gate_config_for_profile(name: str | None) -> GateConfig:
+    key = (name or "default").strip().lower()
+    if key not in DEVICE_PROFILES:
+        raise KeyError(f"unknown gate profile {name!r}; known: {sorted(DEVICE_PROFILES)}")
+    return DEVICE_PROFILES[key]
 
 
 @dataclass(frozen=True)
@@ -74,6 +112,7 @@ class EvalRecord:
     recall_at_target_far: float | None = None
     recall_at_conf: float | None = None
     latency_p95_ms: float | None = None
+    device: str | None = None
     per_class: dict | None = None
     class_names: list[str] = field(default_factory=list)
 
@@ -95,6 +134,7 @@ class EvalRecord:
             recall_at_target_far=_f(m.get("recall_at_target_far")),
             recall_at_conf=_f(m.get("recall_at_conf")),
             latency_p95_ms=_f(m.get("latency_p95_ms")),
+            device=(m.get("device") or None),
             per_class=m.get("per_class") or {},
             class_names=class_names if class_names is not None else (m.get("class_names") or []),
         )
@@ -150,6 +190,15 @@ def evaluate_gate(record: EvalRecord, config: GateConfig | None = None) -> GateD
         )
 
     # --- Latency: must be measured on the target device ---------------------------
+    if cfg.required_device:
+        got = (record.device or "").strip().lower()
+        need = cfg.required_device.strip().lower()
+        if got != need:
+            reasons.append(
+                f"device mismatch: eval device {record.device!r}, "
+                f"profile {cfg.profile_name!r} requires {cfg.required_device!r} "
+                "(MPS smoke cannot certify Orin)"
+            )
     if not _bounded(record.latency_p95_ms):
         reasons.append("missing/invalid latency_p95_ms")
     elif record.latency_p95_ms > cfg.max_latency_p95_ms:

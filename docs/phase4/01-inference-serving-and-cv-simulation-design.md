@@ -10,6 +10,21 @@ are where performance engineering and believable exercises actually happen.
 
 ---
 
+## Status (lab software vs hardware)
+
+**Software delivered in-repo (2026-09):** CV Lab L1/L2 (+ browser L3), inference
+runtime adapters, `bench/profile_stages.py`, device-scoped gate profiles,
+ONNX export + Orin `export_tensorrt.sh` stub, sim regression CLI, L2
+`provenance=sim-synthetic`.
+
+**Still hardware-blocked:** TensorRT FP16/INT8 engines on Jetson Orin, on-device
+re-cert against `orin-trt-*` profiles, Isaac Sim / AirSim site twin, Pixhawk
+airframe. SITL remains dynamics-only until a camera bridge publishes to Kafka.
+
+Roboflow stays optional for labeling — not part of the serving path.
+
+---
+
 ## 1. How this project maps onto the AI inference stack
 
 ```

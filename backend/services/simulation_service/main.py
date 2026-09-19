@@ -1,15 +1,15 @@
 """Simulation lab service.
 
-Runs exercises that drive the *real product* pipeline with real camera frames:
+Author: Victor.I
 
-- Layer 1: real-footage replay (frozen VisDrone temporal corpus) at nominal fps
-- Layer 2: synthetic scene composition (procedural aerial world, exact GT)
-- Layer 3: live ingest (dashboard renders a 3D world; frames enter here)
+Exercises that drive the *real product* pipeline with camera frames:
 
-All three publish to the same Kafka `inference.frames` topic a physical camera
-gateway would, so the trained model, detection persistence, and alert services
-treat the feed as production. What they produce flows back on
-`inference.detections` and is scored live against the exercise ground truth.
+- Layer 1: real aerial footage — VisDrone corpus stills OR MP4 site/drone clips
+- Layer 2: procedural aerial world (VisDrone class GT)
+- Layer 3: live ingest (browser 3D; optional / deferred for site fidelity)
+
+All publish to Kafka `inference.frames`; detections return on
+`inference.detections` and are scored against exercise ground truth.
 """
 from __future__ import annotations
 
@@ -25,7 +25,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from engine import Exercise, ExerciseManager, FrameRec
-from frames_l1 import CorpusSource
+from frames_l1 import (
+    CorpusSource,
+    VideoSource,
+    list_videos,
+    resolve_video,
+)
 from frames_l2 import SCENARIOS, SyntheticSource
 from scoring import GTBox
 from transport import KafkaTransport
@@ -37,14 +42,23 @@ CORPUS_MANIFEST = os.getenv(
 MAX_EXERCISES = 8
 L3_CAP = 4096
 
+# Agent-replay JSON name → preferred MP4 stem (under SIM_VIDEO_DIR), then L1 seq.
+AGENT_REPLAY_VIDEO = {
+    "railway_line_replay.json": "site-railway-0000001",
+    "railway_line": "site-railway-0000001",
+}
+
 
 class ExerciseCreate(BaseModel):
     layer: int = Field(ge=1, le=3)
     scenario: str = "railway-yard"
     fps: float = Field(default=10.0, gt=0, le=30)
     sequence: Optional[str] = None
+    video: Optional[str] = None  # MP4 id/filename for layer 1
     start_offset: int = 0
     frames: Optional[int] = Field(default=None, gt=0)
+    # When set, prefer the mapped site video for that agent-replay scenario.
+    agent_replay: Optional[str] = None
 
 
 class IngestFrame(BaseModel):
@@ -57,21 +71,41 @@ class IngestFrame(BaseModel):
 manager: ExerciseManager
 
 
-def _l1_provider(manifest: str, sequence: Optional[str], start_offset: int, frames: Optional[int]):
-    src = CorpusSource(manifest_path=manifest, sequence=sequence, start_offset=start_offset, frames_limit=frames)
+def _l1_corpus_provider(manifest: str, sequence: Optional[str], start_offset: int, frames: Optional[int]):
+    src = CorpusSource(
+        manifest_path=manifest,
+        sequence=sequence,
+        start_offset=start_offset,
+        frames_limit=frames,
+    )
     src.load()
 
     def provider(idx: int):
-        b64, w, h, gts = src.frame(idx)
-        return b64, w, h, gts
+        return src.frame(idx)
 
     return provider, src.meta, src.sequence_ids, len(src)
+
+
+def _l1_video_provider(video: str, start_offset: int, frames: Optional[int]):
+    path = resolve_video(video)
+    src = VideoSource(video_path=path, start_offset=start_offset, frames_limit=frames)
+    src.load()
+    if len(src) == 0:
+        raise HTTPException(status_code=400, detail=f"video has no frames: {path.name}")
+
+    def provider(idx: int):
+        return src.frame(idx)
+
+    return provider, src.meta, None, len(src)
 
 
 def _l2_provider(scenario: str, fps: float):
     spec = SCENARIOS.get(scenario)
     if spec is None:
-        raise HTTPException(status_code=404, detail=f"unknown layer2 scenario '{scenario}'; available: {sorted(SCENARIOS)}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"unknown layer2 scenario '{scenario}'; available: {sorted(SCENARIOS)}",
+        )
     src = SyntheticSource(spec=spec, fps=fps)
 
     def provider(idx: int):
@@ -100,7 +134,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "videos": len(list_videos()), "corpus": Path(CORPUS_MANIFEST).exists()}
 
 
 @app.get("/layers")
@@ -110,38 +144,76 @@ def layers() -> dict:
     if available:
         try:
             src = CorpusSource(manifest_path=CORPUS_MANIFEST)
-            seqs = src.sequence_ids  # type: ignore[attr-defined]
+            seqs = src.sequence_ids
         except Exception:
             seqs = []
+    videos = list_videos()
     return {
-        "1": {"name": "real-footage replay", "scenario": "visdrone-corpus", "available": available, "sequences": seqs, "frames_hint": 548},
-        "2": {"name": "synthetic compose", "scenarios": sorted(SCENARIOS)},
-        "3": {"name": "live ingest (3D world)", "scenario": "browser-world"},
+        "1": {
+            "name": "real aerial footage (corpus + MP4)",
+            "scenario": "visdrone-corpus",
+            "available": available or bool(videos),
+            "sequences": seqs,
+            "videos": videos,
+            "frames_hint": 548,
+        },
+        "2": {"name": "procedural aerial compose", "scenarios": sorted(SCENARIOS)},
+        "3": {
+            "name": "live ingest (3D world — deferred for site fidelity)",
+            "scenario": "browser-world",
+            "note": "Prefer L1 MP4 / corpus for real human video. L3 stays available for FPV experiments.",
+        },
     }
+
+
+@app.get("/videos")
+def videos() -> list[dict]:
+    return list_videos()
 
 
 @app.post("/exercises", status_code=201)
 def create_exercise(body: ExerciseCreate) -> dict:
     if len(manager.exercises) >= MAX_EXERCISES:
         raise HTTPException(status_code=429, detail="too many exercises; stop one first")
-    if body.layer == 1:
-        if not Path(CORPUS_MANIFEST).exists():
-            raise HTTPException(
-                status_code=400,
-                detail="corpus manifest not found; build it with backend/ml/build_corpus.py",
-            )
-        provider, meta, _, total = _l1_provider(
-            CORPUS_MANIFEST, body.sequence, body.start_offset, body.frames
+
+    video = body.video
+    if body.agent_replay and not video:
+        mapped = AGENT_REPLAY_VIDEO.get(body.agent_replay) or AGENT_REPLAY_VIDEO.get(
+            Path(body.agent_replay).name
         )
-        frames_total = body.frames or total
-        scenario = body.sequence or "visdrone-corpus"
-        fps = body.fps
-        if body.sequence:
-            seq_provider, meta, _, seq_total = _l1_provider(
+        if mapped:
+            try:
+                resolve_video(mapped)
+                video = mapped
+            except FileNotFoundError:
+                video = None
+
+    if body.layer == 1:
+        if video:
+            try:
+                provider, meta, _, total = _l1_video_provider(
+                    video, body.start_offset, body.frames
+                )
+            except FileNotFoundError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            except RuntimeError as exc:
+                raise HTTPException(status_code=500, detail=str(exc)) from exc
+            frames_total = body.frames or total
+            scenario = Path(video).stem if "/" not in video else Path(video).stem
+            fps = body.fps
+        else:
+            if not Path(CORPUS_MANIFEST).exists():
+                raise HTTPException(
+                    status_code=400,
+                    detail="corpus manifest not found; build it with backend/ml/build_corpus.py "
+                    "or pass video= for MP4 L1",
+                )
+            provider, meta, _, total = _l1_corpus_provider(
                 CORPUS_MANIFEST, body.sequence, body.start_offset, body.frames
             )
-            provider = seq_provider
-            frames_total = body.frames or seq_total
+            frames_total = body.frames or total
+            scenario = body.sequence or "visdrone-corpus"
+            fps = body.fps
     elif body.layer == 2:
         provider, meta, _, total = _l2_provider(body.scenario, body.fps)
         fps = body.fps
